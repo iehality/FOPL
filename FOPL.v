@@ -1,11 +1,8 @@
 Require Import Classical.
 Require Import FunctionalExtensionality.
-Require Import PeanoNat.
-Require Import Coq.Arith.Le.
-Require Import Coq.Arith.Max.
+Require Import Arith.
 Require Import Lia.
 (* coqc -Q FOPL FOPL FOPL/FOPL.v *)
-
 
 Section FirstOrderPredicateLogic.
 (**)
@@ -71,6 +68,7 @@ Section FirstOrderPredicateLogic.
 
   Definition andl p q := neg (imp p (neg q)).
   Definition orl p q := imp (neg p) q.
+  Definition ext p := neg (fal (neg p)).
 
   Definition slide {A : Type} (s : nat -> A) (n : A) : nat -> A := fun x0 => 
     match x0 with
@@ -486,9 +484,10 @@ Arguments neg {_}.
 Arguments imp {_}.
 Arguments andl {_}.
 Arguments orl {_}.
+Arguments fal {_}.
+Arguments ext {_}.
 Arguments LC {_}.
 Arguments LP {_}.
-Arguments fal {_}.
 Arguments rewc {_}.
 Arguments rew {_}.
 Arguments Art {_}.
@@ -505,7 +504,7 @@ Notation "p .( x )" := (p [x;\0]) (at level 0).
 Notation "p .( x , y )" := (p [x; (y; \0)]) (at level 0).
 Notation "p .( x , y , z )" := (p [x; (y; (z; \0))]) (at level 0).
 
-Notation "`0" := (cns) (at level 0).
+Notation "!0" := (cns) (at level 0).
 Notation "' v " := (var v) (at level 0).
 Notation "a == b" := (eql a b) (at level 70, right associativity).
 Notation "~~ p" := (neg p) (at level 79, right associativity).

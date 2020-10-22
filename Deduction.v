@@ -1,8 +1,6 @@
 Require Import Classical.
 Require Import FunctionalExtensionality.
-Require Import PeanoNat.
-Require Import Coq.Arith.Le.
-Require Import Coq.Arith.Max.
+Require Import Arith.
 Require Import Lia.
 Require Import FOPL.FOPL.
 (* coqc -Q FOPL FOPL FOPL/Deduction.v *)
@@ -19,7 +17,7 @@ Section DeductionSystem.
   
   Definition sfT (T : Th) := fun p => exists q, p = sf q /\ T q.
   
-  Inductive provable (T : Th) : LP ->  Prop :=
+  Inductive provable (T : Th) : LP -> Prop :=
   | GEN  : forall q, provable (sfT T) q -> provable T (fal q)
   | MP   : forall p q, provable T p -> provable T (p --> q) -> provable T q
   | Pr0  : forall p, T p -> provable T p
@@ -452,6 +450,20 @@ Section DeductionSystem.
     MP (fal p). auto.
     AX.
   Qed.
+
+  Lemma ext_intro : forall T p t, (T |- p.(t)) -> (T |- ext p).
+  Proof.
+    intros.
+    unfold ext.
+    MP (p.(t)). auto.
+    apply contrad_elim.
+    INTRO.
+    MP (fal (~~ p)).
+    apply pNNPP. 
+    AX.
+    rewrite <- neg_sbs.
+    AX.
+  Qed.
   
   Ltac SPECIALIZE h u := apply subst with (t := u) in h.
   
@@ -558,5 +570,6 @@ Ltac INTRO := apply Deduction.
 Ltac SPLIT := apply destruct_iff || apply destruct_and.
 Ltac DESTRUCT h := apply and_destruct in h; destruct h.
 Ltac SPECIALIZE h u := apply subst with (t := u) in h.
+Ltac EXISTS u := apply ext_intro with (t := u).
 Ltac SYMMETRY := apply eql_refl.
 Ltac WL := apply weakening.
