@@ -460,6 +460,48 @@ Section DeductionSystem.
     AX.
   Qed.
 
+  Lemma fal_R2 : forall T p t s, (T |- fal (fal p)) -> (T |- p.(t, s)).
+  Proof.
+    intros.
+    assert (p ['0; (sfc s .; \0)].(t) = p.(t, s)).
+    - unfold sfc.
+      rewrite <- nested_rew.
+      apply rew_rew.
+      intros.
+      destruct n.
+      simpl.
+      auto.
+      simpl.
+      destruct n.
+      simpl.
+      rewrite <- nested_rewc.
+      simpl.
+      symmetry.
+      apply rewc_id.
+      simpl.
+      auto.
+    - rewrite <- H0.
+      apply fal_R.
+      assert ((fal p).(s) = fal (p ['0; (sfc s .; \0)])).
+      simpl.
+      assert (p ['0; fun x => sfc ((s; \0) x)] = p ['0; (sfc s .; \0)]).
+      + unfold sfc.
+        apply rew_rew.
+        intros.
+        destruct n.
+        simpl.
+        auto.
+        simpl.
+        destruct n.
+        simpl. auto.
+        simpl. auto.
+      + rewrite -> H1.
+        auto.
+      + rewrite <- H1.
+        apply fal_R.
+        auto.
+  Qed.
+
   Lemma ext_R : forall T p t, (T |- p.(t)) -> (T |- ext p).
   Proof.
     intros.
@@ -561,6 +603,14 @@ Section DeductionSystem.
     AX.
   Qed.
 
+  Lemma eql_rewrite : forall T p t s, (T |- t == s) -> (T |- p.(t)) -> (T |- p.(s)).
+  Proof.
+    intros.
+    MP (p.(t)). auto.
+    MP (t == s). auto.
+    AX.
+  Qed.
+
   Lemma eql_trans : forall T t u v, (T |- t == u) -> (T |- u == v) -> (T |- t == v).
   Proof.
     intros.
@@ -641,5 +691,6 @@ Ltac SPLIT := apply destruct_iff || apply destruct_and.
 Ltac DESTRUCT h := apply and_destruct in h; destruct h.
 Ltac SPECIALIZE h u := apply fal_R with (t := u) in h.
 Ltac EXISTS u := apply ext_R with (t := u).
+Ltac REWRITE u := apply eql_rewrite with (t:=u).
 Ltac SYMMETRY := apply eql_refl.
 Ltac WL := apply weakening.

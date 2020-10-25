@@ -75,8 +75,15 @@ Section FirstOrderPredicateLogic.
     | 0 => n
     | S m => s m
     end.
+
+  Definition embed {A : Type} (s : nat -> A) (a : A) : nat -> A := fun n => 
+    match n with 
+    | 0 => a 
+    | _ => s n 
+    end.
   
   Notation "( n ; s )" := (slide s n) (at level 0).
+  Notation "( n .; s )" := (embed s n) (at level 0).
 
   Fixpoint rewc (s : nat -> LC) (c : LC) : LC :=
     match c with
@@ -109,6 +116,10 @@ Section FirstOrderPredicateLogic.
   Notation "p .( x )" := (p [x;\0]) (at level 0).
   Notation "p .( x , y )" := (p [x; (y; \0)]) (at level 0).
   Notation "p .( x , y , z )" := (p [x; (y; (z; \0))]) (at level 0).
+  Notation "p ..( x )" := (p [(x.;\0)]) (at level 0).
+  Notation "p ..( x , y )" := (p [(x.;(y.;\0))]) (at level 0).
+  Notation "p ..( x , y , z )" := (p [(x.;(y.;(z.;\0)))]) (at level 0).
+
 
 (** ** Syntax Facts *)
 
@@ -496,6 +507,7 @@ Arguments sfc {_}.
 Arguments sf {_}.
 
 Notation "( n ; s )" := (slide s n) (at level 0).
+Notation "( n .; s )" := (embed s n) (at level 0).
 Notation "p [ s ]" := (rew s p) (at level 0).
 Notation "p [ n ; s ]" := (p [(n;s)]) (at level 0).
 Notation "\0" := (fun x => (var x)) (at level 0).
@@ -503,13 +515,16 @@ Notation "\0" := (fun x => (var x)) (at level 0).
 Notation "p .( x )" := (p [x;\0]) (at level 0).
 Notation "p .( x , y )" := (p [x; (y; \0)]) (at level 0).
 Notation "p .( x , y , z )" := (p [x; (y; (z; \0))]) (at level 0).
+Notation "p ..( x )" := (p [(x.;\0)]) (at level 0).
+Notation "p ..( x , y )" := (p [(x.;(y.;\0))]) (at level 0).
+Notation "p ..( x , y , z )" := (p [(x.;(y.;(z.;\0)))]) (at level 0).
 
 Notation "!0" := (cns) (at level 0).
 Notation "' v " := (var v) (at level 0).
-Notation "a == b" := (eql a b) (at level 70, right associativity).
-Notation "~~ p" := (neg p) (at level 79, right associativity).
-Notation "p --> q" := (imp p q) (at level 80, right associativity, q at level 200).
+Notation "a == b" := (eql a b) (at level 60, right associativity).
+Notation "~~ p" := (neg p) (at level 61, right associativity).
+Notation "p --> q" := (imp p q) (at level 62, right associativity, q at level 200).
 
-Notation "p //\ q" := (andl p q) (at level 81, right associativity).
-Notation "p \\/ q" := (orl p q) (at level 82, right associativity).
-Notation "p <--> q" := ((p --> q) //\ (q --> p)) (at level 83, right associativity, q at level 200).
+Notation "p //\ q" := (andl p q) (at level 63, right associativity).
+Notation "p \\/ q" := (orl p q) (at level 64, right associativity).
+Notation "p <--> q" := ((p --> q) //\ (q --> p)) (at level 65, right associativity, q at level 200).
