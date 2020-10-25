@@ -23,18 +23,18 @@ Fixpoint innerNat (n0 : nat) : LC :=
   | S n => !S (innerNat n)
   end.
 
-  Notation "$ n" := (innerNat n) (at level 0).
+Notation "$ n" := (innerNat n) (at level 0).
 
-  Lemma IN_rewc : forall n s, $n = rewc s ($n).
-  Proof.
-    intros.
-    apply constant_rew.
-    induction n.
-    simpl. 
-    auto.
-    simpl.
-    auto.
-  Qed.
+Lemma IN_rewc : forall n s, $n = rewc s ($n).
+Proof.
+  intros.
+  apply constant_rew.
+  induction n.
+  simpl. 
+  auto.
+  simpl.
+  auto.
+Qed.
 
 Inductive Q : Th :=
   | NEQ0S : Q (fal (!0 =/= !S '0))
@@ -44,8 +44,11 @@ Inductive Q : Th :=
   | PLUS  : Q (fal (fal ((!S '0) !+ '1 == !S ('0 !+ '1))))
   | MLO   : Q (fal (!0 !* '0 == !0))
   | MULT  : Q (fal (fal ((!S '0) !* '1 == ('0 !* '1) !+ '1)))
-  | LE    : Q (fal (fal ('0 !<= '1 <--> ext ('0 !+ '1 == '2))))
-  | IND   : forall p, Q (p.(!0) --> fal (p --> p..(!S '0)) --> fal p).
+  | LE    : Q (fal (fal ('0 !<= '1 <--> ext ('0 !+ '1 == '2)))).
+  
+Inductive PA : Th :=
+  | PA_Q  : forall p, Q p -> PA p
+  | IND   : forall p, PA (p.(!0) --> fal (p --> p..(!S '0)) --> fal p).
 
 Lemma plus_L : forall n m, Q |- $n !+ $m == $(n + m).
 Proof.
