@@ -39,12 +39,12 @@ Section DeductionSystem.
   
   Definition addT (T : Th) p := fun x => T x \/ x = p.
   Definition elmT (T : Th) p := fun x => T x /\ x <> p.
-  Definition includeT (T U : Th) := forall p, T p -> U p.
+  Definition incT (T U : Th) := forall p, T p -> U p.
+  Definition eqvT (T U : Th) := (incT T U) /\ (incT U T).
   Notation "T :+ p" := (addT T p) (at level 71, left associativity).
   Notation "T :- p" := (elmT T p) (at level 71, left associativity). 
-  Notation "T :< U" := (includeT T U) (at level 72, left associativity).
-  
-  Definition SentTh (T : Th) := T :< (sfT T) /\ (sfT T) :< T. 
+  Notation "T :< U" := (incT T U) (at level 72, left associativity).
+  Notation "T :== U" := (eqvT T U) (at level 72, left associativity).
   
   Lemma p__p : forall T p, T |- p --> p.
   Proof.
@@ -83,7 +83,7 @@ Section DeductionSystem.
   Proof.
     assert (forall (T : Th) p, T |- p -> forall (U : Th), T :< U -> U |- p).
     - intros T p H.
-      unfold includeT.
+      unfold incT.
       induction H.
       + intros.
         apply GEN.
@@ -116,7 +116,7 @@ Section DeductionSystem.
   Proof.
     intros.
     apply TInclusion with (T := T).
-    unfold includeT. unfold addT. auto.
+    unfold incT. unfold addT. auto.
     auto.
   Qed.
   
@@ -132,7 +132,7 @@ Section DeductionSystem.
         MP (fal (sf p --> q)).
         GEN.
         apply TInclusion with (T := sfT T :- sf p).
-        unfold sfT. unfold elmT. unfold includeT.
+        unfold sfT. unfold elmT. unfold incT.
         intros.
         destruct H0.
         destruct H0 as [p1].
@@ -190,7 +190,7 @@ Section DeductionSystem.
       destruct em.
       + apply imp_pr. 
         apply TInclusion with (T := T :+ p).
-        unfold includeT.
+        unfold incT.
         intros.
         destruct H2.
         auto.
@@ -198,7 +198,7 @@ Section DeductionSystem.
         auto.
         auto.
       + apply TInclusion with (T := (T :+ p) :- p).
-        unfold includeT.
+        unfold incT.
         intros.
         destruct H2.
         destruct H2.
@@ -212,7 +212,7 @@ Section DeductionSystem.
   Lemma sf_dsb0 : forall T p, (sfT T :+ sf p) :< (sfT (T :+ p)).
   Proof.
     intros.
-    unfold sfT. unfold addT. unfold includeT.
+    unfold sfT. unfold addT. unfold incT.
     intros.
     destruct H.
     destruct H as [p1].
@@ -228,7 +228,7 @@ Section DeductionSystem.
   
   Lemma sf_dsb1 : forall T U p, T :< U -> (T :+ p) :< (U :+ p).
   Proof.
-    unfold sfT. unfold addT. unfold includeT.
+    unfold sfT. unfold addT. unfold incT.
     intros.
     destruct H0.
     auto.
@@ -242,6 +242,15 @@ Section DeductionSystem.
     apply sf_dsb0.
     auto.
   Qed.
+
+  Lemma MPintro : forall T p q, (T |- p) -> (T :+ p |- q) -> (T |- q).
+  Proof.
+    intros.
+    MP p. auto.
+    INTRO. auto.
+  Qed.
+
+  Ltac MPI h := apply MPintro with (p:=h).
   
   Lemma imp_pqrs : forall T p q r s, (T |- p --> q --> r) -> (T |- r --> s) -> (T |- p --> q --> s).
   Proof.
@@ -443,15 +452,15 @@ Section DeductionSystem.
     auto.
     auto.
   Qed.
-  
-  Lemma subst : forall T p t, (T |- fal p) -> (T |- p.(t)).
+
+  Lemma fal_R : forall T p t, (T |- fal p) -> (T |- p.(t)).
   Proof.
     intros.
     MP (fal p). auto.
     AX.
   Qed.
 
-  Lemma ext_intro : forall T p t, (T |- p.(t)) -> (T |- ext p).
+  Lemma ext_R : forall T p t, (T |- p.(t)) -> (T |- ext p).
   Proof.
     intros.
     unfold ext.
@@ -464,8 +473,30 @@ Section DeductionSystem.
     rewrite <- neg_sbs.
     AX.
   Qed.
+
+  Lemma ext_L : forall T p q, (sfT T |- p --> sf q) -> (T |- ext p --> q).
+  Proof.
+    unfold ext.
+    intros.
+    INTRO.
+    apply pNNPP.
+    apply deduction_inv.
+    apply contrad_add.
+    INTRO.
+    GEN.
+    apply sf_dsb.
+    apply deduction_inv.
+    assert ((~~ (sf q)) = sf (~~ q)).
+    unfold sf.
+    simpl.
+    auto.
+    rewrite <- H0.
+    apply contrad_add.
+    auto.
+  Qed.
+
   
-  Ltac SPECIALIZE h u := apply subst with (t := u) in h.
+  Ltac SPECIALIZE h u := apply fal_R with (t := u) in h.
   
   Lemma fal_and_destruct : forall T p q, (T |- fal (p //\ q)) -> ((T |- fal p) /\ (T |- fal q)).
   Proof.
@@ -548,28 +579,67 @@ Section DeductionSystem.
     rewrite -> H1.
     AX.
   Qed.
+
+  Definition SentTh (T : Th) := forall p, T p -> Ar p = 0.
+
+  Lemma SentTheqvT : forall T, SentTh T -> T :== sfT T.
+  Proof.
+    unfold eqvT. unfold incT. unfold sfT. unfold SentTh.
+    intros.
+    split.
+    intros.
+    exists p.
+    split.
+    unfold sf.
+    apply sentence_rew.
+    auto. auto.
+    unfold sf.
+    intros.
+    destruct H0 as [q].
+    destruct H0.
+    rewrite <- sentence_rew in H0.
+    rewrite H0. auto.
+    auto.
+  Qed.
+
+  Lemma sfT_T : forall T p, SentTh T -> (sfT T |- p) -> (T |- p).
+  Proof.
+    intros.
+    apply TInclusion with (T := sfT T).
+    apply SentTheqvT. auto.
+    auto.
+  Qed.
   
+  Lemma T_sfT : forall T p, SentTh T -> (T |- p) -> (sfT T |- p).
+  Proof.
+    intros.
+    apply TInclusion with (T := T).
+    apply SentTheqvT. auto.
+    auto.
+  Qed.
+
 End DeductionSystem.
 
 Arguments Th {_}.
 Arguments provable {_}.
 Arguments addT {_}.
 Arguments elmT {_}.
-Arguments includeT {_}.
+Arguments incT {_}.
 
 Notation "T |- p" := (provable T p) (at level 95).
 Notation "T :+ p" := (addT T p) (at level 71, left associativity).
 Notation "T :- p" := (elmT T p) (at level 71, left associativity). 
-Notation "T :< U" := (includeT T U) (at level 72, left associativity).
+Notation "T :< U" := (incT T U) (at level 72, left associativity).
 
 Ltac GEN := apply GEN.
 Ltac MP h := apply MP with (p:=h).
+Ltac MPI h := apply MPintro with (p:=h).
 Ltac AX := apply p__p || apply Pr1 || apply Pr2 || apply Pr3 || apply Qt0 || apply Qt1 || apply Qt2 || apply Eq0 || apply Eq1 || unfold addT; apply Pr0; auto.
 Ltac TRANS h := apply imp_trans with (q:=h).
 Ltac INTRO := apply Deduction.
 Ltac SPLIT := apply destruct_iff || apply destruct_and.
 Ltac DESTRUCT h := apply and_destruct in h; destruct h.
-Ltac SPECIALIZE h u := apply subst with (t := u) in h.
-Ltac EXISTS u := apply ext_intro with (t := u).
+Ltac SPECIALIZE h u := apply fal_R with (t := u) in h.
+Ltac EXISTS u := apply ext_R with (t := u).
 Ltac SYMMETRY := apply eql_refl.
 Ltac WL := apply weakening.
