@@ -1,5 +1,3 @@
-Require Import Classical.
-Require Import FunctionalExtensionality.
 Require Import Lia.
 Require Import FOPL.FOPL.
 Require Import FOPL.Deduction.
@@ -74,6 +72,7 @@ Section TarskiSemantics.
   Definition models M p := forall s, Valp M s p.
   Notation "M |= p" := (models M p) (at level 99).
   Definition modelsTh M (T :Th) := forall p, T p -> M |= p.
+  Notation "M |=th T" := (modelsTh M T) (at level 99).
   Definition SValid (T : Th) p := forall M, modelsTh M T -> M |= p.
   Notation "T ||= p" := (SValid T p) (at level 99).
 
@@ -348,3 +347,7 @@ Qed.
   Qed.
 
 End TarskiSemantics.
+
+Notation "M |= p" := (models M p) (at level 99).
+Notation "M |=th T" := (modelsTh M T) (at level 99).
+Notation "M |=th T" := (modelsTh M T) (at level 99).

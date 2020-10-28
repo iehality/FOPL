@@ -1,7 +1,5 @@
-Require Import Classical.
-Require Import FunctionalExtensionality.
-Require Import Arith.
-Require Import Lia.
+Require Export Arith.
+Require Export Lia.
 Require Export FOPL.FOPL.
 Require Export FOPL.Deduction.
 Require Export FOPL.Semantics.
@@ -86,7 +84,6 @@ Proof.
     AX. apply PLUS.
 Qed.
 
-Check Model.
 Instance N : Model L := {
     V := nat;
     cnsM := 0;
@@ -108,7 +105,7 @@ Instance N : Model L := {
       end
   }.
 
-Lemma NQ : modelsTh N Q.
+Lemma NQ : N |=th Q.
 Proof.
   unfold modelsTh. unfold models.
   intros.
@@ -145,7 +142,7 @@ Proof.
       lia.
 Qed.
 
-Lemma NPA : modelsTh N PA.
+Lemma NPA : N |=th PA.
 Proof.
   unfold modelsTh. unfold models.
   intros.

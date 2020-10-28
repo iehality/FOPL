@@ -1,5 +1,3 @@
-Require Import Classical.
-Require Import FunctionalExtensionality.
 Require Import Arith.
 Require Import Lia.
 Require Import FOPL.FOPL.

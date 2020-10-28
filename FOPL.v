@@ -1,5 +1,5 @@
-Require Import Classical.
-Require Import FunctionalExtensionality.
+Require Export Classical.
+Require Export FunctionalExtensionality.
 Require Import Arith.
 Require Import Lia.
 (* coqc -Q FOPL FOPL FOPL/FOPL.v *)
