@@ -42,30 +42,30 @@ Section Incompleteness.
   Variable T : Th.
   Variable Γ : LP.
   Hypothesis artG : Ar Γ = 3.
-  Hypothesis Gdefg : forall p n, T |- fal (Γ.($⌜p⌝, n, '0) <--> '0 == $⌜p.(n)⌝).
+  Hypothesis Gdefg : forall p n, T |- fal (Γ.($⌜p⌝, n, '0) [<->] '0 [=] $⌜p.(n)⌝).
 
   Section FixPoint.
   
     Variable θ : LP.
     Hypothesis opf : Ar θ = 1.
-    Definition σ : LP := fal (Γ.('1, '1, '0) --> θ.('0)).
+    Definition σ : LP := fal (Γ.('1, '1, '0) [->] θ.('0)).
     
-    Lemma sigiff : forall p, T |- σ.($⌜p⌝) <--> θ.($⌜p.($⌜p⌝)⌝).
+    Lemma sigiff : forall p, T |- σ.($⌜p⌝) [<->] θ.($⌜p.($⌜p⌝)⌝).
     Proof.
       intros.
-      assert (θrew : forall s, θ = θ [('0);s]).
+      assert (θrew : forall s, θ = θ .[('0);s]).
       intros.
       apply form1_p_ps.
       auto.
       simpl. auto.
-      assert (forall n, σ.($n) = (fal (Γ.($n, $n, '0) --> θ.('0)))).
+      assert (forall n, σ.($n) = (fal (Γ.($n, $n, '0) [->] θ.('0)))).
       - unfold σ. simpl. simpl.
         simpl.
         intros.
         rewrite <- θrew.
         rewrite <- θrew.
         rewrite <- nested_rew.
-        assert (Γ.($n, $n, '0) = Γ [fun x => rewc (('0); fun x0 => sfc (($n; \0) x0)) ((('1); (('1); (('0); \0))) x)]).
+        assert (Γ.($n, $n, '0) = Γ .[fun x => rewc (('0); fun x0 => sfc (($n; \0) x0)) ((('1); (('1); (('0); \0))) x)]).
         + unfold sfc.
           apply rew_rew.
           rewrite -> artG.
@@ -112,18 +112,18 @@ Section Incompleteness.
           lia.
           }
           INTRO.
-          MP ((Γ.($⌜p⌝, $⌜p⌝, '0) --> θ.('0)).($⌜p.($⌜p⌝)⌝)).
-          MP (fal (Γ.($⌜p⌝, $⌜p⌝, '0) --> θ.('0))).
+          MP ((Γ.($⌜p⌝, $⌜p⌝, '0) [->] θ.('0)).($⌜p.($⌜p⌝)⌝)).
+          MP (fal (Γ.($⌜p⌝, $⌜p⌝, '0) [->] θ.('0))).
           AX.
           AX.
           simpl.
           rewrite <- Gr.
           rewrite <- Ur.
           INTRO.
-          MP ($⌜p.($⌜p⌝)⌝ == $⌜p.($⌜p⌝)⌝ --> θ.($⌜p.($⌜p⌝)⌝)).
+          MP ($⌜p.($⌜p⌝)⌝ [=] $⌜p.($⌜p⌝)⌝ [->] θ.($⌜p.($⌜p⌝)⌝)).
           TRANS (Γ.($⌜p⌝, $⌜p⌝, $⌜p.($⌜p⌝)⌝)).
           
-          assert (T |- Γ.($⌜p⌝, $⌜p⌝, $⌜p.($⌜p⌝)⌝) <--> $⌜p.($⌜p⌝)⌝ == $⌜p.($⌜p⌝)⌝).
+          assert (T |- Γ.($⌜p⌝, $⌜p⌝, $⌜p.($⌜p⌝)⌝) [<->] $⌜p.($⌜p⌝)⌝ [=] $⌜p.($⌜p⌝)⌝).
           specialize (Gdefg p ($⌜p⌝)).
           SPECIALIZE Gdefg ($⌜p.($⌜p⌝)⌝).
           simpl in Gdefg.
@@ -137,14 +137,14 @@ Section Incompleteness.
           auto.
           AX.
           INTRO.
-          MP ($⌜p.($⌜p⌝)⌝ == $⌜p.($⌜p⌝)⌝).
+          MP ($⌜p.($⌜p⌝)⌝ [=] $⌜p.($⌜p⌝)⌝).
           AX.
           AX.
         + INTRO.
           specialize (Gdefg p ($⌜p⌝)).
           apply fal_and_destruct in Gdefg.
           destruct Gdefg.
-          apply fal_trans with (q := '0 == $⌜p.($⌜p⌝)⌝).
+          apply fal_trans with (q := '0 [=] $⌜p.($⌜p⌝)⌝).
           WL.
           auto.
           GEN.
@@ -162,7 +162,7 @@ Section Incompleteness.
           }
           rewrite <- H2.
           MP (θ.($⌜p.($⌜p⌝)⌝)). AX.
-          MP ($⌜p.($⌜p⌝)⌝ == '0).
+          MP ($⌜p.($⌜p⌝)⌝ [=] '0).
           SYMMETRY.
           AX.
           AX.
@@ -172,22 +172,22 @@ Section Incompleteness.
 
     Definition fixpoint := σ.($⌜σ⌝).
 
-    Lemma Diagonal : T |- fixpoint <--> θ.($⌜fixpoint⌝).
+    Lemma Diagonal : T |- fixpoint [<->] θ.($⌜fixpoint⌝).
     Proof. 
       apply sigiff.
     Qed.
 
   End FixPoint.
   
-  Theorem Undefinability : (exists Tr, Ar Tr = 1 /\ forall p, T |- p <--> Tr.($⌜p⌝)) -> ~ Consis T.
+  Theorem Undefinability : (exists Tr, Ar Tr = 1 /\ forall p, T |- p [<->] Tr.($⌜p⌝)) -> ~ Consis T.
   Proof.
     intros. intro conT.
     destruct H as [Tr].
     destruct H.
-    assert (Ar (~~ Tr) = 1).
+    assert (Ar ([~] Tr) = 1).
     simpl. auto.
-    pose (d := fixpoint (~~ Tr)).
-    assert (D := Diagonal (~~ Tr) H1). fold d in D.
+    pose (d := fixpoint ([~] Tr)).
+    assert (D := Diagonal ([~] Tr) H1). fold d in D.
     specialize (H0 d).
     rewrite -> neg_sbs in D.
     DESTRUCT H0.
@@ -195,10 +195,10 @@ Section Incompleteness.
     apply conT.
     exists d.
     split.
-    - MP (~~ ~~ d).
+    - MP ([~] [~] d).
       apply neg_intro.
       INTRO.
-      MP (~~ ~~ Tr.($⌜d⌝)).
+      MP ([~] [~] Tr.($⌜d⌝)).
       apply deduction_inv.
       apply contrad_add. auto.
       apply contrad_add.
@@ -207,7 +207,7 @@ Section Incompleteness.
       apply pr_NNPP.
     - apply neg_intro.
       INTRO.
-      MP (~~ Tr.($⌜d⌝)).
+      MP ([~] Tr.($⌜d⌝)).
       apply deduction_inv. auto.
       apply contrad_add.
       WL.
@@ -224,7 +224,7 @@ Section Incompleteness.
     Variable Prov : LP.
     Hypothesis arProv : Ar Prov = 2.
     Hypothesis ProvH : forall n m, prov n m <-> (T |- Prov.($n, $m)). 
-    Hypothesis nProvH : forall n m, ~ prov n m <-> (T |- ~~ Prov.($n, $m)).
+    Hypothesis nProvH : forall n m, ~ prov n m <-> (T |- [~] Prov.($n, $m)).
   
     Let PrG : LP := ext Prov.
   
@@ -233,7 +233,7 @@ Section Incompleteness.
       unfold ext.
       intros.
       simpl.
-      assert (Prov.('0, $n) = Prov['0; fun x => sfc (($n; \0) x)]).
+      assert (Prov.('0, $n) = Prov.['0; fun x => sfc (($n; \0) x)]).
       apply rew_rew.
       rewrite -> arProv.
       intros.
@@ -266,7 +266,7 @@ Section Incompleteness.
       lia.
     Qed.
 
-    Let Omega_ConT := forall p, (forall n, T |- ~~ p.($n)) -> ~ (T |- ext p).
+    Let Omega_ConT := forall p, (forall n, T |- [~] p.($n)) -> ~ (T |- ext p).
 
     Lemma Prov_ext : Omega_ConT -> forall p, (T |- PrG.($⌜p⌝)) -> exists n, (T |- Prov.($n, $⌜p⌝)).
     Proof.
@@ -313,34 +313,34 @@ Section Incompleteness.
       intros.
       apply NNPP.
       intro.
-      specialize (H (~~ !0 == !0)).
-      assert (~ (T |- ext (~~ !0 == !0))).
+      specialize (H ([~] [0] [=] [0])).
+      assert (~ (T |- ext ([~] [0] [=] [0]))).
       apply H.
       intros.
       simpl.
       apply pNN.
       AX.
-      apply explosion with (p := ext (~~ !0 == !0)) in H0.
+      apply explosion with (p := ext ([~] [0] [=] [0])) in H0.
       auto.
     Qed.
   
-    Definition ConGT : LP := ~~ PrG.($⌜~~ !0 == !0⌝).
-    Definition G : LP := fixpoint (~~ PrG).
+    Definition ConGT : LP := [~] PrG.($⌜[~] [0] [=] [0]⌝).
+    Definition G : LP := fixpoint ([~] PrG).
   
-    Lemma Gfixpoint : T |- G <--> ~~ PrG.($⌜G⌝).
+    Lemma Gfixpoint : T |- G [<->] [~] PrG.($⌜G⌝).
     Proof.
-      assert (Ar (~~ PrG) = 1).
+      assert (Ar ([~] PrG) = 1).
       simpl.
       auto.
       rewrite -> arProv.
       lia.
-      assert (D := Diagonal (~~ PrG) H).
+      assert (D := Diagonal ([~] PrG) H).
       fold G in D. 
       rewrite -> neg_sbs in D.
       auto.
     Qed.
   
-    Theorem Incompleteness1 : Omega_ConT -> ~ (T |- G) /\ ~ (T |- ~~ G).
+    Theorem Incompleteness1 : Omega_ConT -> ~ (T |- G) /\ ~ (T |- [~] G).
     Proof.
       intros.
       assert (gf := Gfixpoint).
@@ -361,7 +361,7 @@ Section Incompleteness.
         split.
         + rewrite -> E1.
           apply pNNPP.
-          MP (~~ G). auto.
+          MP ([~] G). auto.
           apply contrad_add.
           auto.
           auto.
@@ -374,12 +374,12 @@ Section Incompleteness.
     
     Variable prov : nat -> LP -> Prop.
     Hypothesis proofH : forall p, (T |- p) <-> (exists n, prov n p).
-    Let provR n p := (prov n p) /\ (~ exists m, m <= n /\ prov m (~~ p)).  
+    Let provR n p := (prov n p) /\ (~ exists m, m <= n /\ prov m ([~] p)).  
     
     Variable ProvR : LP.
     Hypothesis arProv : Ar ProvR = 2.
     Hypothesis ProvRH : forall n p, provR n p <-> (T |- ProvR.($n, $⌜p⌝)).
-    Hypothesis nProvRH : forall n p, ~ provR n p <-> (T |- ~~ ProvR.($n, $⌜p⌝)).
+    Hypothesis nProvRH : forall n p, ~ provR n p <-> (T |- [~] ProvR.($n, $⌜p⌝)).
   
     Let PrR : LP := ext ProvR.
 
@@ -388,7 +388,7 @@ Section Incompleteness.
       unfold ext.
       intros.
       simpl.
-      assert (ProvR.('0, $n) = ProvR['0; fun x => sfc (($n; \0) x)]).
+      assert (ProvR.('0, $n) = ProvR.['0; fun x => sfc (($n; \0) x)]).
       apply rew_rew.
       rewrite -> arProv.
       intros.
@@ -421,7 +421,7 @@ Section Incompleteness.
       lia.
     Qed.
 
-    Let ConRT : LP := ~~ PrR.($⌜~~ !0 == !0⌝).
+    Let ConRT : LP := [~] PrR.($⌜[~] [0] [=] [0]⌝).
 
     Lemma E1R : Consis T -> forall p, (T |- p) <-> (T |- PrR.($⌜p⌝)).
     Proof.
@@ -459,24 +459,24 @@ Section Incompleteness.
     Hypothesis arPr : Ar Pr = 1.
     
     Hypothesis D1 : forall p, T |- p -> T |- Pr.($⌜p⌝).
-    Hypothesis D2 : forall p q, T |- Pr.($⌜p --> q⌝) --> Pr.($⌜p⌝) --> Pr.($⌜q⌝).
-    Hypothesis D3 : forall p, T |- Pr.($⌜p⌝) --> Pr.($⌜Pr.($⌜p⌝)⌝).
+    Hypothesis D2 : forall p q, T |- Pr.($⌜p [->] q⌝) [->] Pr.($⌜p⌝) [->] Pr.($⌜q⌝).
+    Hypothesis D3 : forall p, T |- Pr.($⌜p⌝) [->] Pr.($⌜Pr.($⌜p⌝)⌝).
     
-    Definition γ : LP := fixpoint (~~ Pr).
-    Definition ConT : LP := ~~ Pr.($⌜~~ !0 == !0⌝).
+    Definition γ : LP := fixpoint ([~] Pr).
+    Definition ConT : LP := [~] Pr.($⌜[~] [0] [=] [0]⌝).
     
-    Lemma nPrfix : T |- γ <--> ~~ Pr.($⌜γ⌝).
+    Lemma nPrfix : T |- γ [<->] [~] Pr.($⌜γ⌝).
     Proof.
-      assert (Ar (~~ Pr) = 1).
+      assert (Ar ([~] Pr) = 1).
       simpl.
       auto.
-      assert (D := Diagonal (~~ Pr) H).
+      assert (D := Diagonal ([~] Pr) H).
       fold γ in D. 
       rewrite -> neg_sbs in D.
       auto.
     Qed.
     
-    Lemma Consis_g : T |- ConT --> γ.
+    Lemma Consis_g : T |- ConT [->] γ.
     Proof.
       assert (D := nPrfix). 
       DESTRUCT D.
@@ -484,19 +484,19 @@ Section Incompleteness.
       apply contrad_elim.
       INTRO.
       apply pNN.
-      assert (forall p, T :+ (~~ γ) |- Pr.($⌜p⌝)).
+      assert (forall p, T :+ ([~] γ) |- Pr.($⌜p⌝)).
       - intros.
-        MP (Pr.($⌜~~ Pr.($⌜γ⌝)⌝)).
+        MP (Pr.($⌜[~] Pr.($⌜γ⌝)⌝)).
         + MP (Pr.($⌜γ⌝)).
           apply pNNPP.
           apply deduction_inv.
           apply contrad_add. auto.
-          MP (Pr.($⌜γ --> ~~ Pr.($⌜γ⌝)⌝)).
+          MP (Pr.($⌜γ [->] [~] Pr.($⌜γ⌝)⌝)).
           WL.
           apply D1. auto.
           WL.        
           apply D2.
-        + MP (Pr.($⌜~~ Pr.($⌜γ⌝) --> p⌝)).
+        + MP (Pr.($⌜[~] Pr.($⌜γ⌝) [->] p⌝)).
           MP (Pr.($⌜Pr.($⌜γ⌝)⌝)).
           MP (Pr.($⌜γ⌝)).
           apply pNNPP.
@@ -504,7 +504,7 @@ Section Incompleteness.
           apply contrad_add. auto.
           WL.
           apply D3.
-          MP (Pr.($⌜Pr.($⌜γ⌝) --> ~~ Pr.($⌜γ⌝) --> p⌝)).
+          MP (Pr.($⌜Pr.($⌜γ⌝) [->] [~] Pr.($⌜γ⌝) [->] p⌝)).
           WL.
           apply D1.
           INTRO. INTRO.
@@ -537,30 +537,30 @@ Section Incompleteness.
       auto.
     Qed.
   
-    Lemma pr_distr : forall p q r, (T :+ r |- Pr.($⌜p --> q⌝)) -> (T :+ r |- Pr.($⌜p⌝) --> Pr.($⌜q⌝)).
+    Lemma pr_distr : forall p q r, (T :+ r |- Pr.($⌜p [->] q⌝)) -> (T :+ r |- Pr.($⌜p⌝) [->] Pr.($⌜q⌝)).
     Proof.
       intros.
-      MP (Pr.($⌜p --> q⌝)). auto.
+      MP (Pr.($⌜p [->] q⌝)). auto.
       WL.
       apply D2.
     Qed. 
   
-    Theorem Loeb : forall p, Ar p = 0 -> (T |- Pr.($⌜p⌝) --> p) -> (T |- p).
+    Theorem Loeb : forall p, Ar p = 0 -> (T |- Pr.($⌜p⌝) [->] p) -> (T |- p).
     Proof.
       intros.
-      assert (Ar (Pr.('0) --> p) = 1).
+      assert (Ar (Pr.('0) [->] p) = 1).
       simpl.
       rewrite <- form1_p_ps.
       rewrite -> arPr.
       rewrite -> H.
       simpl. auto.
       auto. auto.
-      pose (q := fixpoint (Pr.('0) --> p)).
+      pose (q := fixpoint (Pr.('0) [->] p)).
       assert (D := Diagonal _ H1). fold q in D.
-      assert ((Pr.($⌜q⌝) --> p) = (Pr.('0) --> p).($⌜q⌝)).
+      assert ((Pr.($⌜q⌝) [->] p) = (Pr.('0) [->] p).($⌜q⌝)).
       simpl.
       rewrite <- nested_rew.
-      assert (Pr.($⌜q⌝) = Pr [fun x => rewc ($⌜q⌝; \0) (('0; \0) x)]).
+      assert (Pr.($⌜q⌝) = Pr .[fun x => rewc ($⌜q⌝; \0) (('0; \0) x)]).
       apply rew_rew.
       rewrite -> arPr.
       intros.
@@ -573,15 +573,15 @@ Section Incompleteness.
       rewrite <- H2 in D.
   
       DESTRUCT D.
-      assert (T |- Pr.($⌜q⌝) --> p).
+      assert (T |- Pr.($⌜q⌝) [->] p).
       - INTRO.
         MP (Pr.($⌜p⌝)).
         MP (Pr.($⌜Pr.($⌜q⌝)⌝)).
         apply deduction_inv.
         apply D3.
-        MP (Pr.($⌜Pr.($⌜q⌝) --> p⌝)).
+        MP (Pr.($⌜Pr.($⌜q⌝) [->] p⌝)).
         apply deduction_inv.
-        MP (Pr.($⌜q --> Pr.($⌜q⌝) --> p⌝)).
+        MP (Pr.($⌜q [->] Pr.($⌜q⌝) [->] p⌝)).
         apply D1.
         auto.
         apply D2.
@@ -591,7 +591,7 @@ Section Incompleteness.
         auto.
       - MP (Pr.($⌜q⌝)).
         apply D1.
-        MP (Pr.($⌜q⌝) --> p).
+        MP (Pr.($⌜q⌝) [->] p).
         auto.
         auto.
         auto.

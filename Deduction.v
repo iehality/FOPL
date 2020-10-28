@@ -19,23 +19,23 @@ Section DeductionSystem.
   
   Inductive provable (T : Th) : LP -> Prop :=
   | GEN  : forall q, provable (sfT T) q -> provable T (fal q)
-  | MP   : forall p q, provable T p -> provable T (p --> q) -> provable T q
+  | MP   : forall p q, provable T p -> provable T (p [->] q) -> provable T q
   | Pr0  : forall p, T p -> provable T p
-  | Pr1  : forall p q, provable T (p --> q --> p)
-  | Pr2  : forall p q r, provable T ((p --> q --> r) --> ((p --> q) --> (p --> r)))
-  | Pr3  : forall p q, provable T ((~~ p --> ~~ q) --> (q --> p))
-  | Qt0  : forall p t, provable T (fal p --> p.(t))
-  | Qt1  : forall p q, provable T (fal (p --> q) --> ((fal p) --> (fal q)))
-  | Qt2  : forall p, provable T (p --> fal (sf p))
-  | Eq0  : forall t, provable T (t == t)
-  | Eq1  : forall p t u, provable T (t == u --> p.(t) --> p.(u)).
+  | Pr1  : forall p q, provable T (p [->] q [->] p)
+  | Pr2  : forall p q r, provable T ((p [->] q [->] r) [->] ((p [->] q) [->] (p [->] r)))
+  | Pr3  : forall p q, provable T (([~] p [->] [~] q) [->] (q [->] p))
+  | Qt0  : forall p t, provable T (fal p [->] p.(t))
+  | Qt1  : forall p q, provable T (fal (p [->] q) [->] ((fal p) [->] (fal q)))
+  | Qt2  : forall p, provable T (p [->] fal (sf p))
+  | Eq0  : forall t, provable T (t [=] t)
+  | Eq1  : forall p t u, provable T (t [=] u [->] p.(t) [->] p.(u)).
   
   Ltac MP h := apply MP with (p:=h).
   Ltac GEN := apply GEN.
   
   Notation "T |- p" := (provable T p) (at level 95).
   
-  Definition Consis (T : Th) := ~ exists p, (T |- p) /\ (T |- ~~ p).
+  Definition Consis (T : Th) := ~ exists p, (T |- p) /\ (T |- [~] p).
   
   Definition addT (T : Th) p := fun x => T x \/ x = p.
   Definition elmT (T : Th) p := fun x => T x /\ x <> p.
@@ -44,14 +44,14 @@ Section DeductionSystem.
   Notation "T :+ p" := (addT T p) (at level 71, left associativity).
   Notation "T :- p" := (elmT T p) (at level 71, left associativity). 
   Notation "T :< U" := (incT T U) (at level 72, left associativity).
-  Notation "T :== U" := (eqvT T U) (at level 72, left associativity).
+  Notation "T :[=] U" := (eqvT T U) (at level 72, left associativity).
   
-  Lemma p__p : forall T p, T |- p --> p.
+  Lemma p__p : forall T p, T |- p [->] p.
   Proof.
     intros.
-    MP (p --> (p --> p)).
+    MP (p [->] (p [->] p)).
     apply Pr1.
-    MP ((p --> (p --> p) --> p)).
+    MP ((p [->] (p [->] p) [->] p)).
     apply Pr1.
     apply Pr2.
   Qed.
@@ -60,7 +60,7 @@ Section DeductionSystem.
   
   (** ** Proof facts *)  
   
-  Lemma imp_pr : forall T p q, (T |- p) -> (T |- q --> p).
+  Lemma imp_pr : forall T p q, (T |- p) -> (T |- q [->] p).
   Proof.
     intros.
     MP p.
@@ -68,11 +68,11 @@ Section DeductionSystem.
     AX.
   Qed.
   
-  Lemma imp_trans : forall T p q r, (T |- p --> q) -> (T |- q --> r) -> (T |- p --> r).
+  Lemma imp_trans : forall T p q r, (T |- p [->] q) -> (T |- q [->] r) -> (T |- p [->] r).
   Proof.
     intros.
-    MP (p --> q). auto.
-    MP (p --> q --> r).
+    MP (p [->] q). auto.
+    MP (p [->] q [->] r).
     apply imp_pr. auto.
     AX.
   Qed.
@@ -120,16 +120,16 @@ Section DeductionSystem.
     auto.
   Qed.
   
-  Theorem Deduction : forall T p q, (T :+ p |- q) -> (T |- p --> q).
+  Theorem Deduction : forall T p q, (T :+ p |- q) -> (T |- p [->] q).
   Proof.
-    assert (forall T q, (T |- q) -> (forall p, T :- p |- p --> q)).
+    assert (forall T q, (T |- q) -> (forall p, T :- p |- p [->] q)).
     - intros T q H.
       induction H.
       + intros.
         specialize (IHprovable (sf p)).
         apply imp_trans with (q := fal (sf p)).
         AX.
-        MP (fal (sf p --> q)).
+        MP (fal (sf p [->] q)).
         GEN.
         apply TInclusion with (T := sfT T :- sf p).
         unfold sfT. unfold elmT. unfold incT.
@@ -146,8 +146,8 @@ Section DeductionSystem.
         auto.
         AX.
       + intros.
-        MP (p0 --> p). auto.
-        MP (p0 --> p --> q). auto.
+        MP (p0 [->] p). auto.
+        MP (p0 [->] p [->] q). auto.
         AX.
       + intros.
         assert (em := classic (p0 = p)).
@@ -252,13 +252,13 @@ Section DeductionSystem.
 
   Ltac MPI h := apply MPintro with (p:=h).
   
-  Lemma imp_pqrs : forall T p q r s, (T |- p --> q --> r) -> (T |- r --> s) -> (T |- p --> q --> s).
+  Lemma imp_pqrs : forall T p q r s, (T |- p [->] q [->] r) -> (T |- r [->] s) -> (T |- p [->] q [->] s).
   Proof.
     intros.
-    MP (p --> q --> r). auto.
-    MP (p --> (q --> r) --> (q --> s)).
+    MP (p [->] q [->] r). auto.
+    MP (p [->] (q [->] r) [->] (q [->] s)).
     apply imp_pr.
-    MP (q --> r --> s).
+    MP (q [->] r [->] s).
     apply imp_pr. auto.
     AX.
     AX.
@@ -271,14 +271,14 @@ Section DeductionSystem.
     destruct H as [q].
     destruct H.
     MP q. auto.
-    MP (~~ p --> ~~ q).
-    MP (~~ q).
+    MP ([~] p [->] [~] q).
+    MP ([~] q).
     auto.
     AX.
     AX.
   Qed.
   
-  Lemma p_np_q : forall T p q, T |- p --> ~~ p --> q.
+  Lemma p_np_q : forall T p q, T |- p [->] [~] p [->] q.
   Proof.
     intros.
     INTRO.
@@ -293,7 +293,7 @@ Section DeductionSystem.
     AX.
   Qed.
     
-  Lemma deduction_inv : forall T p q, (T |- p --> q) -> (T :+ p |- q).
+  Lemma deduction_inv : forall T p q, (T |- p [->] q) -> (T :+ p |- q).
   Proof.
     intros.
     MP p. AX.
@@ -301,60 +301,60 @@ Section DeductionSystem.
     auto.
   Qed.
   
-  Lemma pr_NNPP : forall T p, T |- ~~ ~~ p --> p.
+  Lemma pr_NNPP : forall T p, T |- [~] [~] p [->] p.
   Proof.
     intros.
     INTRO.
-    MP (~~ ~~ p).
+    MP ([~] [~] p).
     AX.
-    MP (~~ p --> ~~ ~~ ~~ p).
-    MP (~~ ~~ ~~ ~~ p --> ~~ ~~ p).
-    MP (~~ ~~ p).
+    MP ([~] p [->] [~] [~] [~] p).
+    MP ([~] [~] [~] [~] p [->] [~] [~] p).
+    MP ([~] [~] p).
     AX.
     AX.
     AX.
     AX.
   Qed.
   
-  Lemma pr_NN : forall T p, T |- p --> ~~ ~~ p.
+  Lemma pr_NN : forall T p, T |- p [->] [~] [~] p.
   Proof.
     intros.
-    MP (~~ ~~ ~~ p --> ~~ p).
+    MP ([~] [~] [~] p [->] [~] p).
     apply pr_NNPP.
     AX.
   Qed.
   
-  Lemma pNNPP : forall T p, (T |- ~~ ~~ p) -> (T |- p).
+  Lemma pNNPP : forall T p, (T |- [~] [~] p) -> (T |- p).
   Proof.
     intros.
-    MP (~~ ~~ p).
+    MP ([~] [~] p).
     auto.
-    MP (~~ p --> ~~ ~~ ~~ p).
-    MP (~~ ~~ ~~ ~~ p --> ~~ ~~ p).
-    MP (~~ ~~ p).
+    MP ([~] p [->] [~] [~] [~] p).
+    MP ([~] [~] [~] [~] p [->] [~] [~] p).
+    MP ([~] [~] p).
     auto.
     AX.
     AX.
     AX.
   Qed.
   
-  Lemma pNN : forall T p, (T |- p) -> (T |- ~~ ~~ p).
+  Lemma pNN : forall T p, (T |- p) -> (T |- [~] [~] p).
   Proof.
     intros.
     MP p. auto.
-    MP (~~ ~~ ~~ p --> ~~ p).
+    MP ([~] [~] [~] p [->] [~] p).
     apply pr_NNPP.
     AX.
   Qed.
   
-  Lemma neg_intro : forall T p, T |- (p --> ~~ p) -> (T |- ~~ p).
+  Lemma neg_intro : forall T p, T |- (p [->] [~] p) -> (T |- [~] p).
   Proof.
     intros.
-    MP (p --> ~~ p). auto.
+    MP (p [->] [~] p). auto.
     INTRO.
-    MP (p --> ~~ p).
+    MP (p [->] [~] p).
     AX.
-    MP (~~ ~~ p --> ~~ (p --> ~~ p)).
+    MP ([~] [~] p [->] [~] (p [->] [~] p)).
     INTRO.
     apply explosion.
     unfold Consis.
@@ -368,21 +368,21 @@ Section DeductionSystem.
     AX.
   Qed.
   
-  Lemma contrad_elim : forall T p q, (T |- ~~ p --> ~~ q) -> (T |- q --> p).
+  Lemma contrad_elim : forall T p q, (T |- [~] p [->] [~] q) -> (T |- q [->] p).
   Proof.
     intros.
-    MP (~~ p --> ~~ q). auto.
+    MP ([~] p [->] [~] q). auto.
     AX.
   Qed.
   
-  Lemma contrad_add : forall T p q, (T |- p --> q) -> (T |- ~~ q --> ~~ p).
+  Lemma contrad_add : forall T p q, (T |- p [->] q) -> (T |- [~] q [->] [~] p).
   Proof.
     intros.
-    MP (~~ ~~ p --> ~~ ~~ q).
+    MP ([~] [~] p [->] [~] [~] q).
     INTRO.
     MP q.
     MP p.
-    MP (~~ ~~ p). AX.
+    MP ([~] [~] p). AX.
     apply pr_NNPP.
     apply weakening.
     auto.
@@ -390,7 +390,7 @@ Section DeductionSystem.
     AX.
   Qed.
   
-  Lemma destruct_and : forall T p q, (T |- p) -> (T |- q) -> (T |- p //\ q).
+  Lemma destruct_and : forall T p q, (T |- p) -> (T |- q) -> (T |- p [/\] q).
   Proof.
     unfold andl.
     intros.
@@ -400,7 +400,7 @@ Section DeductionSystem.
       apply weakening.
       auto.
       auto.
-      MP (~~ ~~ (p --> ~~ q) --> ~~ q).
+      MP ([~] [~] (p [->] [~] q) [->] [~] q).
       apply imp_pr.
       MP p.
       apply weakening.
@@ -409,31 +409,31 @@ Section DeductionSystem.
       AX.
   Qed.
   
-  Lemma and_destruct : forall T p q, (T |- p //\ q) -> ((T |- p) /\ (T |- q)).
+  Lemma and_destruct : forall T p q, (T |- p [/\] q) -> ((T |- p) /\ (T |- q)).
   Proof.
     unfold andl.
     intros.
     split.
-    - MP (~~ (p --> ~~ q)). auto.
-      MP (~~ p --> ~~ ~~ (p --> ~~ q)).
+    - MP ([~] (p [->] [~] q)). auto.
+      MP ([~] p [->] [~] [~] (p [->] [~] q)).
       INTRO.
-      MP (p --> ~~ q).
+      MP (p [->] [~] q).
       INTRO.
       apply explosion.
       unfold Consis. intro. contradict H0. 
       exists p. split. AX. AX.
       apply pr_NN.
       AX.
-    - MP (~~ (p --> ~~ q)). auto.
-      MP (~~ q --> ~~ ~~ (p --> ~~ q)).
+    - MP ([~] (p [->] [~] q)). auto.
+      MP ([~] q [->] [~] [~] (p [->] [~] q)).
       INTRO.
-      MP (p --> ~~ q).
+      MP (p [->] [~] q).
       apply imp_pr. AX.
       apply pr_NN.
       AX.
   Qed.
   
-  Lemma destruct_iff : forall T p q, (T |- p --> q) -> (T |- q --> p) -> (T |- p <--> q).
+  Lemma destruct_iff : forall T p q, (T |- p [->] q) -> (T |- q [->] p) -> (T |- p [<->] q).
   Proof.
     intros.
     apply destruct_and.
@@ -444,7 +444,7 @@ Section DeductionSystem.
   Ltac SPLIT := apply destruct_iff || apply destruct_and.
   Ltac DESTRUCT h := apply and_destruct in h; destruct h.
   
-  Lemma pr_rewrite2 : forall {T} {p0 p1 r}, (T |- p0 <--> p1) -> (T |- p0 --> r) -> (T |- p1 --> r).
+  Lemma pr_rewrite2 : forall {T} {p0 p1 r}, (T |- p0 [<->] p1) -> (T |- p0 [->] r) -> (T |- p1 [->] r).
   Proof.
     intros.
     DESTRUCT H.
@@ -463,7 +463,7 @@ Section DeductionSystem.
   Lemma fal_R2 : forall T p t s, (T |- fal (fal p)) -> (T |- p.(t, s)).
   Proof.
     intros.
-    assert (p ['0; (sfc s .; \0)].(t) = p.(t, s)).
+    assert (p .['0; (sfc s .; \0)].(t) = p.(t, s)).
     - unfold sfc.
       rewrite <- nested_rew.
       apply rew_rew.
@@ -482,9 +482,9 @@ Section DeductionSystem.
       auto.
     - rewrite <- H0.
       apply fal_R.
-      assert ((fal p).(s) = fal (p ['0; (sfc s .; \0)])).
+      assert ((fal p).(s) = fal (p .['0; (sfc s .; \0)])).
       simpl.
-      assert (p ['0; fun x => sfc ((s; \0) x)] = p ['0; (sfc s .; \0)]).
+      assert (p .['0; fun x => sfc ((s; \0) x)] = p .['0; (sfc s .; \0)]).
       + unfold sfc.
         apply rew_rew.
         intros.
@@ -509,14 +509,14 @@ Section DeductionSystem.
     MP (p.(t)). auto.
     apply contrad_elim.
     INTRO.
-    MP (fal (~~ p)).
+    MP (fal ([~] p)).
     apply pNNPP. 
     AX.
     rewrite <- neg_sbs.
     AX.
   Qed.
 
-  Lemma ext_L : forall T p q, (sfT T |- p --> sf q) -> (T |- ext p --> q).
+  Lemma ext_L : forall T p q, (sfT T |- p [->] sf q) -> (T |- ext p [->] q).
   Proof.
     unfold ext.
     intros.
@@ -528,7 +528,7 @@ Section DeductionSystem.
     GEN.
     apply sf_dsb.
     apply deduction_inv.
-    assert ((~~ (sf q)) = sf (~~ q)).
+    assert (([~] (sf q)) = sf ([~] q)).
     unfold sf.
     simpl.
     auto.
@@ -540,57 +540,57 @@ Section DeductionSystem.
   
   Ltac SPECIALIZE h u := apply fal_R with (t := u) in h.
   
-  Lemma fal_and_destruct : forall T p q, (T |- fal (p //\ q)) -> ((T |- fal p) /\ (T |- fal q)).
+  Lemma fal_and_destruct : forall T p q, (T |- fal (p [/\] q)) -> ((T |- fal p) /\ (T |- fal q)).
   Proof.
     intros.
     split.
-    - MP (fal (p //\ q)). auto.
-      MP (fal ((p //\ q) --> p)).
+    - MP (fal (p [/\] q)). auto.
+      MP (fal ((p [/\] q) [->] p)).
       GEN.
       INTRO.
-      assert (sfT T :+ (p //\ q) |- p //\ q). AX.
+      assert (sfT T :+ (p [/\] q) |- p [/\] q). AX.
       DESTRUCT H0.
       auto.
       AX.
-    - MP (fal (p //\ q)). auto.
-      MP (fal ((p //\ q) --> q)).
+    - MP (fal (p [/\] q)). auto.
+      MP (fal ((p [/\] q) [->] q)).
       GEN.
       INTRO.
-      assert (sfT T :+ (p //\ q) |- p //\ q). AX.
+      assert (sfT T :+ (p [/\] q) |- p [/\] q). AX.
       DESTRUCT H0.
       auto.
       AX.
   Qed.
   
-  Lemma fal_trans : forall T p q r, (T |- fal (p --> q)) -> (T |- fal (q --> r)) -> (T |- fal (p --> r)).
+  Lemma fal_trans : forall T p q r, (T |- fal (p [->] q)) -> (T |- fal (q [->] r)) -> (T |- fal (p [->] r)).
   Proof.
     intros.
-    MP (fal (p --> q)). auto.
-    MP (fal ((p --> q) --> p --> r)).
-    MP (fal (p --> q --> r)).
-    MP (fal (q --> r)). auto.
-    MP (fal ((q --> r) --> (p --> q --> r))).
+    MP (fal (p [->] q)). auto.
+    MP (fal ((p [->] q) [->] p [->] r)).
+    MP (fal (p [->] q [->] r)).
+    MP (fal (q [->] r)). auto.
+    MP (fal ((q [->] r) [->] (p [->] q [->] r))).
     GEN.
     repeat INTRO.
     MP q.
     AX.
     AX.
     AX.
-    MP (fal ((p --> q --> r) --> (p --> q) --> (p --> r))).
+    MP (fal ((p [->] q [->] r) [->] (p [->] q) [->] (p [->] r))).
     GEN.
     AX.
     AX.
     AX.
   Qed.
   
-  Lemma eql_refl : forall T t u, (T |- t == u) -> (T |- u == t).
+  Lemma eql_refl : forall T t u, (T |- t [=] u) -> (T |- u [=] t).
   Proof.
     intros.
-    MP (t == u). auto.
+    MP (t [=] u). auto.
     INTRO.
-    MP (t == t). AX.
-    MP (t == u). AX.
-    assert (forall v, (v == t) = ('0 == sfc t).(v)).
+    MP (t [=] t). AX.
+    MP (t [=] u). AX.
+    assert (forall v, (v [=] t) = ('0 [=] sfc t).(v)).
     unfold sfc.
     intros.
     simpl.
@@ -603,21 +603,21 @@ Section DeductionSystem.
     AX.
   Qed.
 
-  Lemma eql_rewrite : forall T p t s, (T |- t == s) -> (T |- p.(t)) -> (T |- p.(s)).
+  Lemma eql_rewrite : forall T p t s, (T |- t [=] s) -> (T |- p.(t)) -> (T |- p.(s)).
   Proof.
     intros.
     MP (p.(t)). auto.
-    MP (t == s). auto.
+    MP (t [=] s). auto.
     AX.
   Qed.
 
-  Lemma eql_trans : forall T t u v, (T |- t == u) -> (T |- u == v) -> (T |- t == v).
+  Lemma eql_trans : forall T t u v, (T |- t [=] u) -> (T |- u [=] v) -> (T |- t [=] v).
   Proof.
     intros.
-    MP (u == v). auto.
-    MP (u == t).
+    MP (u [=] v). auto.
+    MP (u [=] t).
     apply eql_refl. auto.
-    assert (forall x, (x == v) = ('0 == sfc v).(x)).
+    assert (forall x, (x [=] v) = ('0 [=] sfc v).(x)).
     unfold sfc.
     intros.
     simpl.
@@ -632,7 +632,7 @@ Section DeductionSystem.
 
   Definition SentTh (T : Th) := forall p, T p -> Ar p = 0.
 
-  Lemma SentTheqvT : forall T, SentTh T -> T :== sfT T.
+  Lemma SentTheqvT : forall T, SentTh T -> T :[=] sfT T.
   Proof.
     unfold eqvT. unfold incT. unfold sfT. unfold SentTh.
     intros.

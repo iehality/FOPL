@@ -28,7 +28,7 @@ Section TarskiSemantics.
   (t : LC) : V :=
     match t with
     | 'm          => s m 
-    | !0          => cnsM
+    | [0]          => cnsM
     | Fc0 _ c     => Fc0M c
     | Fc1 _ c x   => Fc1M c (Valt M s x)
     | Fc2 _ c x y => Fc2M c (Valt M s x) (Valt M s y)
@@ -39,12 +39,12 @@ Section TarskiSemantics.
   (s : nat -> V)
   (p : LP) : Prop :=
     match p with
-    | x == y      => (Valt M s x) = (Valt M s y)
+    | x [=] y      => (Valt M s x) = (Valt M s y)
     | Pd0 _ c     => Pd0M c
     | Pd1 _ c x   => Pd1M c (Valt M s x)
     | Pd2 _ c x y => Pd2M c (Valt M s x) (Valt M s y)
-    | q --> r     => (Valp M s q) -> (Valp M s r)   
-    | ~~ q        => ~ (Valp M s q)
+    | q [->] r     => (Valp M s q) -> (Valp M s r)   
+    | [~] q        => ~ (Valp M s q)
     | fal q       => forall (t : V), Valp M (t;s) q
     end.
 
@@ -70,7 +70,7 @@ Section TarskiSemantics.
       rewrite <- IHt2.
       auto.
   Qed.
-  
+
   Lemma shiftc_eq : forall M t s c, Valt M s c = Valt M (t; s) (sfc c).
   Proof.
     unfold sfc.
@@ -87,7 +87,7 @@ Section TarskiSemantics.
       auto.
   Qed.
 
-  Lemma lp_iff0 : forall M p s0 s1 u, (forall n, s0 n = Valt M s1 (u n)) -> Valp M s0 p <-> Valp M s1 p [u].
+  Lemma lp_iff0 : forall M p s0 s1 u, (forall n, s0 n = Valt M s1 (u n)) -> Valp M s0 p <-> Valp M s1 p .[u].
   Proof.
     induction p.
     - simpl.
@@ -126,7 +126,7 @@ Section TarskiSemantics.
       auto.
     - simpl.
       intros.
-      assert (miff : forall t, Valp M (t; s0) p <-> Valp M (t; s1) (p) ['0; fun x => sfc (u x)]).
+      assert (miff : forall t, Valp M (t; s0) p <-> Valp M (t; s1) (p) .['0; fun x => sfc (u x)]).
       + intros.
         apply IHp.
         intros.
@@ -140,7 +140,7 @@ Section TarskiSemantics.
         apply miff. auto.
   Qed.
 
-  Lemma lp_iff1 : forall M p s u, Valp M (fun n => Valt M s (u n)) p <-> Valp M s p [u].
+  Lemma lp_iff1 : forall M p s u, Valp M (fun n => Valt M s (u n)) p <-> Valp M s p .[u].
   Proof.
     intros.
     apply lp_iff0.
@@ -221,3 +221,4 @@ Section TarskiSemantics.
         auto.
   Qed.
 
+End TarskiSemantics.

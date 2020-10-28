@@ -107,18 +107,18 @@ Section FirstOrderPredicateLogic.
     | fal p     => fal (rew ((var 0); fun x => (sfc (s x))) p)
     end.
 
-  Notation "p [ s ]" := (rew s p) (at level 0).
-  Notation "p [ n ; s ]" := (p [(n;s)]) (at level 0).
+  Notation "p .[ s ]" := (rew s p) (at level 0).
+  Notation "p .[ n ; s ]" := (p .[(n;s)]) (at level 0).
   Notation "\0" := (fun x => (var x)) (at level 0).
 
-  Definition sf (p : LP) : LP := p [fun x => (var (S x))].
-  Definition norm c p := p [fun x => c].
-  Notation "p .( x )" := (p [x;\0]) (at level 0).
-  Notation "p .( x , y )" := (p [x; (y; \0)]) (at level 0).
-  Notation "p .( x , y , z )" := (p [x; (y; (z; \0))]) (at level 0).
-  Notation "p ..( x )" := (p [(x.;\0)]) (at level 0).
-  Notation "p ..( x , y )" := (p [(x.;(y.;\0))]) (at level 0).
-  Notation "p ..( x , y , z )" := (p [(x.;(y.;(z.;\0)))]) (at level 0).
+  Definition sf (p : LP) : LP := p .[fun x => (var (S x))].
+  Definition norm c p := p .[fun x => c].
+  Notation "p .( x )" := (p .[x;\0]) (at level 0).
+  Notation "p .( x , y )" := (p .[x; (y; \0)]) (at level 0).
+  Notation "p .( x , y , z )" := (p .[x; (y; (z; \0))]) (at level 0).
+  Notation "p ..( x )" := (p .[(x.;\0)]) (at level 0).
+  Notation "p ..( x , y )" := (p .[(x.;(y.;\0))]) (at level 0).
+  Notation "p ..( x , y , z )" := (p .[(x.;(y.;(z.;\0)))]) (at level 0).
 
 
 (** ** Syntax Facts *)
@@ -161,7 +161,7 @@ Section FirstOrderPredicateLogic.
       auto.
   Qed.
 
-  Lemma nested_rew : forall p s0 s1, p [fun x => rewc s1 (s0 x)] = p [s0] [s1].
+  Lemma nested_rew : forall p s0 s1, p .[fun x => rewc s1 (s0 x)] = p .[s0] .[s1].
   Proof.
     induction p.
     - simpl.
@@ -275,7 +275,7 @@ Section FirstOrderPredicateLogic.
       auto.
   Qed.
 
-  Lemma rew_rew : forall p s0 s1, (forall n, n < Ar p -> s0 n = s1 n) -> p [s0] = p [s1].
+  Lemma rew_rew : forall p s0 s1, (forall n, n < Ar p -> s0 n = s1 n) -> p .[s0] = p .[s1].
   Proof.
     induction p.
     - simpl.
@@ -320,13 +320,13 @@ Section FirstOrderPredicateLogic.
       auto.
     - simpl.
       intros.
-      assert (p1 [s0] = p1 [s1]).
+      assert (p1 .[s0] = p1 .[s1]).
       + apply IHp1.
         intros.
         apply H.
         apply lt_lt_max_l.
         auto.
-      + assert (p2 [s0] = p2 [s1]).
+      + assert (p2 .[s0] = p2 .[s1]).
         apply IHp2.
         intros.
         apply H.
@@ -341,7 +341,7 @@ Section FirstOrderPredicateLogic.
       auto.
     - simpl.
       intros.
-      assert (p [(var 0); fun x => sfc (s0 x)] = p [(var 0); fun x => sfc (s1 x)]).
+      assert (p .[(var 0); fun x => sfc (s0 x)] = p .[(var 0); fun x => sfc (s1 x)]).
       + apply IHp.
         unfold sfc. intros.
         destruct n.
@@ -371,7 +371,7 @@ Section FirstOrderPredicateLogic.
       auto.
   Qed.
 
-  Lemma rew_id : forall p, p = p [\0].
+  Lemma rew_id : forall p, p = p .[\0].
   Proof.
     induction p.
     - simpl. 
@@ -419,10 +419,10 @@ Section FirstOrderPredicateLogic.
       apply rewc_id.
   Qed. 
 
-  Lemma sentence_rew : forall p s, Ar p = 0 -> p = p [s].
+  Lemma sentence_rew : forall p s, Ar p = 0 -> p = p .[s].
   Proof.
     intros.
-    assert (p [\0] = p [s]).
+    assert (p .[\0] = p .[s]).
     - apply rew_rew.
       rewrite -> H.
       intros.
@@ -433,10 +433,10 @@ Section FirstOrderPredicateLogic.
       apply rew_id.
   Qed. 
 
-  Lemma form1_p_ps : forall p s, Ar p = 1 -> (var 0 = s 0) -> p = p [s].
+  Lemma form1_p_ps : forall p s, Ar p = 1 -> (var 0 = s 0) -> p = p .[s].
   Proof.
     intros.
-    assert (p [\0] = p [s]).
+    assert (p .[\0] = p .[s]).
     - apply rew_rew.
       rewrite -> H.
       intros.
@@ -447,7 +447,7 @@ Section FirstOrderPredicateLogic.
       apply rew_id.
   Qed. 
 
-  Lemma form2_ps_ps : forall p s0 s1, Ar p = 2 -> (s0 0 = s1 0) -> (s0 1 = s1 1) -> p [s0] = p [s1].
+  Lemma form2_ps_ps : forall p s0 s1, Ar p = 2 -> (s0 0 = s1 0) -> (s0 1 = s1 1) -> p .[s0] = p .[s1].
   Proof.
     intros.
     apply rew_rew.
@@ -460,7 +460,7 @@ Section FirstOrderPredicateLogic.
     lia.
   Qed. 
 
-  Lemma form3_ps_ps : forall p s0 s1, Ar p = 3 -> (s0 0 = s1 0) -> (s0 1 = s1 1) -> (s0 2 = s1 2) -> p [s0] = p [s1].
+  Lemma form3_ps_ps : forall p s0 s1, Ar p = 3 -> (s0 0 = s1 0) -> (s0 1 = s1 1) -> (s0 2 = s1 2) -> p .[s0] = p .[s1].
   Proof.
     intros.
     apply rew_rew.
@@ -471,7 +471,7 @@ Section FirstOrderPredicateLogic.
     lia.
   Qed.
 
-  Lemma form3_rw0 : forall p s, Ar p = 3 -> p.(s 0, s 1, s 2) = p [s].
+  Lemma form3_rw0 : forall p s, Ar p = 3 -> p.(s 0, s 1, s 2) = p .[s].
   Proof.
     intros.
     apply rew_rew.
@@ -508,23 +508,23 @@ Arguments sf {_}.
 
 Notation "( n ; s )" := (slide s n) (at level 0).
 Notation "( n .; s )" := (embed s n) (at level 0).
-Notation "p [ s ]" := (rew s p) (at level 0).
-Notation "p [ n ; s ]" := (p [(n;s)]) (at level 0).
+Notation "p .[ s ]" := (rew s p) (at level 0).
+Notation "p .[ n ; s ]" := (p .[(n;s)]) (at level 0).
 Notation "\0" := (fun x => (var x)) (at level 0).
 
-Notation "p .( x )" := (p [x;\0]) (at level 0).
-Notation "p .( x , y )" := (p [x; (y; \0)]) (at level 0).
-Notation "p .( x , y , z )" := (p [x; (y; (z; \0))]) (at level 0).
-Notation "p ..( x )" := (p [(x.;\0)]) (at level 0).
-Notation "p ..( x , y )" := (p [(x.;(y.;\0))]) (at level 0).
-Notation "p ..( x , y , z )" := (p [(x.;(y.;(z.;\0)))]) (at level 0).
+Notation "p .( x )" := (p .[x;\0]) (at level 0).
+Notation "p .( x , y )" := (p .[x; (y; \0)]) (at level 0).
+Notation "p .( x , y , z )" := (p .[x; (y; (z; \0))]) (at level 0).
+Notation "p ..( x )" := (p .[(x.;\0)]) (at level 0).
+Notation "p ..( x , y )" := (p .[(x.;(y.;\0))]) (at level 0).
+Notation "p ..( x , y , z )" := (p .[(x.;(y.;(z.;\0)))]) (at level 0).
 
-Notation "!0" := (cns) (at level 0).
+Notation "[0]" := (cns) (at level 0).
 Notation "' v " := (var v) (at level 0).
-Notation "a == b" := (eql a b) (at level 60, right associativity).
-Notation "~~ p" := (neg p) (at level 61, right associativity).
-Notation "p --> q" := (imp p q) (at level 62, right associativity, q at level 200).
+Notation "a [=] b" := (eql a b) (at level 60, right associativity).
+Notation "[~] p" := (neg p) (at level 61, right associativity).
+Notation "p [->] q" := (imp p q) (at level 62, right associativity, q at level 200).
 
-Notation "p //\ q" := (andl p q) (at level 63, right associativity).
-Notation "p \\/ q" := (orl p q) (at level 64, right associativity).
-Notation "p <--> q" := ((p --> q) //\ (q --> p)) (at level 65, right associativity, q at level 200).
+Notation "p [/\] q" := (andl p q) (at level 63, right associativity).
+Notation "p [\/] q" := (orl p q) (at level 64, right associativity).
+Notation "p [<->] q" := ((p [->] q) [/\] (q [->] p)) (at level 65, right associativity, q at level 200).
