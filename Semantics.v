@@ -50,180 +50,174 @@ Section TarskiSemantics.
 
   Definition models M p := forall s, Valp M s p.
   Notation "M |= p" := (models M p) (at level 99).
-  Notation "||= p" := (forall M, models M p) (at level 99).
   Definition modelsTh M (T :Th) := forall p, T p -> M |= p.
-
-  
-  Lemma mthMsfT: forall M T, SentTh T -> modelsTh M T -> modelsTh M (sfT T).
+  Definition SValid (T : Th) p := forall M, modelsTh M T -> M |= p.
+  Notation "T ||= p" := (SValid T p) (at level 99).
+    
+  Lemma lc_eq : forall M t s c, Valt M s (rewc c t) = Valt M (fun x => Valt M s (c x)) t.
   Proof.
-    unfold modelsTh.
+    induction t.
+    - simpl. auto.
+    - simpl. auto.
+    - simpl. auto.
+    - simpl.
+      intros.
+      rewrite <- IHt.
+      auto.
+    - simpl.
+      intros.
+      rewrite <- IHt1.
+      rewrite <- IHt2.
+      auto.
+  Qed.
+  
+  Lemma shiftc_eq : forall M t s c, Valt M s c = Valt M (t; s) (sfc c).
+  Proof.
+    unfold sfc.
+    induction c.
+    - simpl. auto.
+    - simpl. auto.
+    - simpl. auto.
+    - simpl.
+      rewrite <- IHc.
+      auto.
+    - simpl.
+      rewrite <- IHc1.
+      rewrite <- IHc2.
+      auto.
+  Qed.
+
+  Lemma lp_iff0 : forall M p s0 s1 u, (forall n, s0 n = Valt M s1 (u n)) -> Valp M s0 p <-> Valp M s1 p [u].
+  Proof.
+    induction p.
+    - simpl.
+      intros.
+      rewrite -> lc_eq. rewrite -> lc_eq.
+      assert (seq : s0 = (fun x : nat => Valt M s1 (u x))).
+      apply functional_extensionality. auto.                      
+      rewrite <- seq.
+      reflexivity.
+    - simpl.
+      intros.
+      reflexivity.
+    - simpl.
+      intros.
+      rewrite -> lc_eq.
+      assert (seq : s0 = (fun x : nat => Valt M s1 (u x))).
+      apply functional_extensionality. auto.      
+      rewrite <- seq.
+      reflexivity.
+    - simpl.
+      intros.
+      rewrite -> lc_eq. rewrite -> lc_eq.
+      assert (seq : s0 = (fun x : nat => Valt M s1 (u x))).
+      apply functional_extensionality. auto.                      
+      rewrite <- seq.
+      reflexivity.
+    - simpl.
+      intros.
+      rewrite <- (IHp1 s0 s1). rewrite <- (IHp2 s0 s1).
+      reflexivity.
+      auto. auto.
+    - simpl.
+      intros.
+      rewrite <- (IHp s0 s1).
+      reflexivity.
+      auto.
+    - simpl.
+      intros.
+      assert (miff : forall t, Valp M (t; s0) p <-> Valp M (t; s1) (p) ['0; fun x => sfc (u x)]).
+      + intros.
+        apply IHp.
+        intros.
+        destruct n.
+        simpl. auto.
+        simpl. rewrite <- shiftc_eq. auto.
+      + split.
+        intros.
+        apply miff. auto.
+        intros.
+        apply miff. auto.
+  Qed.
+
+  Lemma lp_iff1 : forall M p s u, Valp M (fun n => Valt M s (u n)) p <-> Valp M s p [u].
+  Proof.
     intros.
-    apply H0.
-    apply SentTheqvT.
+    apply lp_iff0.
     auto.
+  Qed.
+
+  Lemma mthsfT: forall M T, modelsTh M T -> modelsTh M (sfT T).
+  Proof.
+    unfold modelsTh. unfold sfT. unfold sf. unfold models.
+    intros.
+    destruct H0 as [q].
+    destruct H0.
+    rewrite -> H0.
+    rewrite <- lp_iff1.
+    apply H.
     auto.
   Qed.
   
-  Section Soundness.
-    Variable T : Th.
-    Hypothesis StT : SentTh T.
-    Variable M : Model.
-    Hypothesis MthT : modelsTh M T.
-    
-    Lemma lc_eq : forall t s c, Valt M s (rewc c t) = Valt M (fun x => Valt M s (c x)) t.
-    Proof.
-      induction t.
-      - simpl. auto.
-      - simpl. auto.
-      - simpl. auto.
-      - simpl.
-        intros.
-        rewrite <- IHt.
-        auto.
-      - simpl.
-        intros.
-        rewrite <- IHt1.
-        rewrite <- IHt2.
-        auto.
-    Qed.
-
-    Lemma shiftc_eq : forall t s c, Valt M s c = Valt M (t; s) (sfc c).
-    Proof.
-      unfold sfc.
-      induction c.
-      - simpl. auto.
-      - simpl. auto.
-      - simpl. auto.
-      - simpl.
-        rewrite <- IHc.
-        auto.
-      - simpl.
-        rewrite <- IHc1.
-        rewrite <- IHc2.
-        auto.
-    Qed.
-
-    Lemma lp_iff0 : forall p s0 s1 u, (forall n, s0 n = Valt M s1 (u n)) -> Valp M s0 p <-> Valp M s1 p [u].
-    Proof.
-      induction p.
-      - simpl.
-        intros.
-        rewrite -> lc_eq. rewrite -> lc_eq.
-        assert (seq : s0 = (fun x : nat => Valt M s1 (u x))).
-        apply functional_extensionality. auto.                      
-        rewrite <- seq.
-        reflexivity.
-      - simpl.
-        intros.
-        reflexivity.
-      - simpl.
-        intros.
-        rewrite -> lc_eq.
-        assert (seq : s0 = (fun x : nat => Valt M s1 (u x))).
-        apply functional_extensionality. auto.      
-        rewrite <- seq.
-        reflexivity.
-      - simpl.
-        intros.
-        rewrite -> lc_eq. rewrite -> lc_eq.
-        assert (seq : s0 = (fun x : nat => Valt M s1 (u x))).
-        apply functional_extensionality. auto.                      
-        rewrite <- seq.
-        reflexivity.
-      - simpl.
-        intros.
-        rewrite <- (IHp1 s0 s1). rewrite <- (IHp2 s0 s1).
-        reflexivity.
-        auto. auto.
-      - simpl.
-        intros.
-        rewrite <- (IHp s0 s1).
-        reflexivity.
-        auto.
-      - simpl.
-        intros.
-        assert (miff : forall t, Valp M (t; s0) p <-> Valp M (t; s1) (p) ['0; fun x => sfc (u x)]).
-        + intros.
-          apply IHp.
-          intros.
-          destruct n.
-          simpl. auto.
-          simpl. rewrite <- shiftc_eq. auto.
-        + split.
-          intros.
-          apply miff. auto.
-          intros.
-          apply miff. auto.
-    Qed.
-
-    Lemma lp_iff1 : forall p s u, Valp M (fun n => Valt M s (u n)) p <-> Valp M s p [u].
-    Proof.
+  Theorem Soundness : forall T p, (T |- p) -> (T ||= p).
+  Proof.
+    unfold SValid.
+    intros.
+    unfold models.
+    induction H.
+    - simpl.
       intros.
-      apply lp_iff0.
+      apply IHprovable.
+      apply mthsfT.
       auto.
-    Qed.
-
-    Theorem Soundness : forall p, (T |- p) -> (M |= p).
-    Proof.
+    - intros.
+      simpl in IHprovable2.
+      auto.
+    - intros.
+      apply H0.
+      auto.
+    - simpl. auto.
+    - simpl. auto.
+    - simpl.
       intros.
-      unfold models.
-      induction H.
-      - simpl.
+      apply NNPP.
+      intro.
+      apply H.
+      auto. auto.
+    - simpl.
+      intros.
+      rewrite <- lp_iff1.
+      assert ((Valt M s t; s) = fun n => Valt M s ((t; \0) n)).
+      + apply functional_extensionality.
         intros.
-        apply IHprovable.
-        apply sentsfT. auto.
-        apply mthMsfT. auto. auto.
-      - intros.
-        simpl in IHprovable2.
+        destruct x.
+        simpl. auto.
+        simpl. auto.
+      + rewrite <- H1.
         auto.
-      - intros.
-        apply MthT.
+    - simpl. auto.
+    - simpl.
+      intros.
+      unfold sf.
+      rewrite <- lp_iff1.
+      assert (s = fun n => Valt M (t;s) '(S n)).
+      + apply functional_extensionality.
+        intros.
+        simpl. auto.
+      + rewrite <-  H1.
         auto.
-      - simpl. auto.
-      - simpl. auto.
-      - simpl.
+    - simpl. auto.
+    - simpl.
+      intros.
+      rewrite <- lp_iff1.
+      rewrite <- lp_iff1 in H1.
+      assert ((fun n => Valt M s ((t; \0) n)) = (fun n => Valt M s ((u; \0) n))).
+      + apply functional_extensionality.
         intros.
-        apply NNPP.
-        intro.
-        apply H.
-        auto. auto.
-      - simpl.
-        intros.
-        rewrite <- lp_iff1.
-        assert ((Valt M s t; s) = fun n => Valt M s ((t; \0) n)).
-        + apply functional_extensionality.
-          intros.
-          destruct x.
-          simpl. auto.
-          simpl. auto.
-        + rewrite <- H0.
-          auto.
-      - simpl. auto.
-      - simpl.
-        intros.
-        unfold sf.
-        rewrite <- lp_iff1.
-        assert (s = fun n => Valt M (t;s) '(S n)).
-        + apply functional_extensionality.
-          intros.
-          simpl. auto.
-        + rewrite <-  H0.
-          auto.
-      - simpl. auto.
-      - simpl.
-        intros.
-        rewrite <- lp_iff1.
-        rewrite <- lp_iff1 in H0.
-        assert ((fun n => Valt M s ((t; \0) n)) = (fun n => Valt M s ((u; \0) n))).
-        + apply functional_extensionality.
-          intros.
-          destruct x.
-          simpl. auto.
-          simpl. auto.
-        + rewrite <- H1.
-          auto.
-    Qed.
+        destruct x.
+        simpl. auto.
+        simpl. auto.
+      + rewrite <- H2.
+        auto.
+  Qed.
 
-  End Soundness.
-  
-  
