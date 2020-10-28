@@ -6,6 +6,29 @@ Require Import FOPL.Deduction.
 
 Set Implicit Arguments.
 
+(**)
+  Lemma nfn_e : forall (t : Type) p, (~ forall (x : t), ~ p x) -> exists x, p x.
+  Proof.
+    intros.
+    apply NNPP.
+    intro.
+    contradict H.
+    intros. intro.
+    assert (exists x : t, p x).
+    exists x. auto.
+    auto.
+  Qed.
+
+  Lemma e_nfn : forall (t : Type) p, (exists x, p x) -> (~ forall (x : t), ~ p x).
+  Proof.
+    intros.
+    intro.
+    destruct H.
+    specialize (H0 x).
+    auto.
+  Qed. 
+(**) 
+
 Section TarskiSemantics.
 
   Variable L : Lang.
@@ -53,7 +76,110 @@ Section TarskiSemantics.
   Definition modelsTh M (T :Th) := forall p, T p -> M |= p.
   Definition SValid (T : Th) p := forall M, modelsTh M T -> M |= p.
   Notation "T ||= p" := (SValid T p) (at level 99).
-    
+
+  Lemma Valt_s_eq : forall M s0 s1 t, (s0 = s1) -> Valt M s0 t = Valt M s1 t.
+Proof.
+  intros.
+  rewrite H.
+  auto.
+Qed.
+
+Lemma Val_s_imp : forall M p s0 s1, (s0 = s1) -> Valp M s0 p -> Valp M s1 p.
+Proof.
+  assert (forall M p s0 s1, (s0 = s1) -> Valp M s0 p <-> Valp M s1 p).
+  - induction p.
+    + simpl.
+      intros.
+      rewrite <- H.
+      reflexivity.
+    + simpl.
+      intros.
+      reflexivity.
+    + simpl.
+      intros.
+      rewrite <- H.
+      reflexivity.
+    + simpl.
+      intros.
+      rewrite <- H.
+      reflexivity.
+    + simpl.
+      intros.
+      rewrite <- IHp1.
+      rewrite <- IHp2.
+      reflexivity.
+      auto. auto.
+    + simpl.
+      intros.
+      rewrite <- IHp.
+      reflexivity.
+      auto.
+    + simpl.
+      intros.
+      assert (forall t, Valp M (t;s0) p <-> Valp M (t;s1) p).
+      intros. apply IHp.
+      rewrite -> H.
+      reflexivity.
+      split.
+      intros.
+      rewrite <- H0.
+      auto.
+      intros.
+      rewrite -> H0.
+      auto.
+  - apply H. 
+Qed.
+
+  Lemma M_and_destruct : forall M p q, (M |= p [/\] q) <-> (M |= p) /\ (M |= q).
+  Proof.
+    unfold models.
+    simpl.
+    intros.
+    split.
+    - intros.
+      split.
+      + intros.
+        specialize (H s).
+        apply NNPP.
+        contradict H.
+        auto.
+      + intros.
+        specialize (H s).
+        apply NNPP.
+        contradict H.
+        auto.
+    - intros.
+      destruct H.
+      intro.
+      apply H1.
+      auto. auto. 
+  Qed.
+
+  Lemma M_iff_destruct : forall M p q, (M |= p [<->] q) <-> (M |= p [->] q) /\ (M |= q [->] p).
+  Proof.
+    intros M p q.
+    apply M_and_destruct.
+  Qed.
+
+  Lemma M_fal : forall M p s, (Valp M s (fal p)) <-> (forall x, Valp M (x;s) p).
+  Proof.
+    simpl.
+    intros.
+    reflexivity.
+  Qed.
+
+  Lemma M_ext : forall M p s, (Valp M s (ext p)) <-> (exists x, Valp M (x;s) p).
+  Proof.
+    simpl.
+    intros.
+    split.
+    intros.
+    apply nfn_e. auto.
+    intros.
+    apply e_nfn.
+    auto.
+  Qed.
+
   Lemma lc_eq : forall M t s c, Valt M s (rewc c t) = Valt M (fun x => Valt M s (c x)) t.
   Proof.
     induction t.

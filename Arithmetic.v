@@ -1,3 +1,7 @@
+Require Import Classical.
+Require Import FunctionalExtensionality.
+Require Import Arith.
+Require Import Lia.
 Require Export FOPL.FOPL.
 Require Export FOPL.Deduction.
 Require Export FOPL.Semantics.
@@ -82,23 +86,92 @@ Proof.
     AX. apply PLUS.
 Qed.
 
-Compute (fal (fal ('0 [+] '1 [=] '1 [+] '0) [->] (fal ('0 [+] '1 [=] '1 [+] '0))..([S] '0))).
+Check Model.
+Instance N : Model L := {
+    V := nat;
+    cnsM := 0;
+    Fc0M := fun _ => 0;
+    Fc1M := fun c => 
+      match c with 
+      | ScA => S 
+      end;
+    Fc2M := fun c => 
+      match c with
+      | plA => plus
+      | mlA => mult
+      end;
+    Pd0M := fun _ => False;
+    Pd1M := fun _ => fun _ => False;
+    Pd2M := fun c =>
+      match c with
+      | lelA => le
+      end
+  }.
 
-Lemma pl_symm : PA |- fal (fal ('0 [+] '1 [=] '1 [+] '0)).
+Lemma NQ : modelsTh N Q.
 Proof.
-  GEN.
-  MP (fal (fal ('0 [+] '1 [=] '1 [+] '0) [->] (fal ('0 [+] '1 [=] '1 [+] '0))..([S] '0))).
-  GEN.
-  INTRO.
-  Compute.
-  simpl. unfold sfc. simpl.
-  GEN.
-  apply sf_dsb.
-  unfold sf. simpl. unfold sfc. simpl.
-  SYMMETRY.
-  apply eql_trans with (u := [S] ('0 [+] '1)).
-  assert ([S] ('0 [+] '1) [=] )
-  MP (fal (fal (([S] '0) [+] '1 [=] [S] ('0 [+] '1)))).
-  
+  unfold modelsTh. unfold models.
+  intros.
+  inversion H.
+  - simpl. lia.
+  - simpl. lia.
+  - simpl.
+    intros.
+    apply e_nfn.
+    destruct t.
+    lia.
+    exists t.
+    auto.
+  - simpl. auto.
+  - simpl. lia.
+  - simpl. auto.
+  - simpl. lia.
+  - apply M_fal. intros.
+    apply M_fal. intros.
+    apply M_and_destruct.
+    unfold models.
+    split.
+    + intros.
+      simpl.
+      intros.
+      intro.
+      specialize (H2 (s0 1 - s0 0)).
+      lia.
+    + intros.
+      simpl.
+      intros.
+      apply NNPP.
+      contradict H1.
+      lia.
+Qed.
 
-
+Lemma NPA : modelsTh N PA.
+Proof.
+  unfold modelsTh. unfold models.
+  intros.
+  inversion H.
+  apply NQ. auto.
+  simpl.
+  intros.
+  induction t.
+  apply lp_iff1 in H1.
+  apply Val_s_imp with (s0 := fun n => Valt N s (([0]; \0) n)). {
+    apply functional_extensionality.
+    intros.
+    destruct x.
+    simpl. auto.
+    simpl. auto.
+  }
+  auto.
+  specialize (H2 t).
+  apply H2 in IHt.
+  apply lp_iff1 in IHt.
+  apply Val_s_imp with (s0 := fun n => Valt N (t; s) (([S] '0 .; \0) n)). {
+  apply functional_extensionality.
+  intros.
+  destruct x.
+  simpl. auto.
+  simpl. auto.
+  }
+  auto.
+Qed.
