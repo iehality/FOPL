@@ -668,6 +668,20 @@ Section DeductionSystem.
     auto.
   Qed.
 
+  Lemma sentsfT: forall T, SentTh T -> SentTh (sfT T).
+  Proof.
+    unfold SentTh. unfold sfT.
+    intros.
+    destruct H0 as [q].
+    destruct H0.
+    rewrite -> H0.
+    assert (q = sf q).
+    apply sentence_rew.
+    auto.
+    rewrite <- H2.
+    auto.
+  Qed.
+
 End DeductionSystem.
 
 Arguments Th {_}.
