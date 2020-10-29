@@ -1,6 +1,8 @@
+Require Export SetoidClass.
+Require Export RelationClasses.
 Require Import Lia.
-Require Import FOPL.FOPL.
-Require Import FOPL.Deduction.
+Require Export FOPL.FOPL.
+Require Export FOPL.Deduction.
 
 Set Implicit Arguments.
 
@@ -33,23 +35,29 @@ Section TarskiSemantics.
   
   Class Model :=
   {
-    V : Type;
-    cnsM : V;
-    Fc0M : fc0 -> V;
-    Fc1M : fc1 -> V -> V;
-    Fc2M : fc2 -> V -> V -> V;
+    Dom : Type;
+    SDom :> Setoid Dom;
+    cnsM : Dom;
+    Fc0M : fc0 -> Dom;
+    Fc1M : fc1 -> Dom -> Dom;
+    Fc2M : fc2 -> Dom -> Dom -> Dom;
     Pd0M : pd0 -> Prop;
-    Pd1M : pd1 -> V -> Prop;
-    Pd2M : pd2 -> V -> V -> Prop;
+    Pd1M : pd1 -> Dom -> Prop;
+    Pd2M : pd2 -> Dom -> Dom -> Prop;
+
+    ProperFc1M :> forall (c : fc1), Proper (equiv ==> equiv) (Fc1M c);
+    ProperFc2M :> forall (c : fc2), Proper (equiv ==> equiv ==> equiv) (Fc2M c);
+    ProperPd1M :> forall (c : pd1), Proper (equiv ==> equiv) (Pd1M c);
+    ProperPd2M :> forall (c : pd2), Proper (equiv ==> equiv ==> equiv) (Pd2M c)
   }.
 
   Fixpoint Valt
   (M : Model)
-  (s : nat -> V)
-  (t : LC) : V :=
+  (s : nat -> Dom)
+  (t : LC) : Dom :=
     match t with
     | 'm          => s m 
-    | [0]          => cnsM
+    | [0]         => cnsM
     | Fc0 _ c     => Fc0M c
     | Fc1 _ c x   => Fc1M c (Valt M s x)
     | Fc2 _ c x y => Fc2M c (Valt M s x) (Valt M s y)
@@ -57,77 +65,100 @@ Section TarskiSemantics.
 
   Fixpoint Valp
   (M : Model)
-  (s : nat -> V)
+  (s : nat -> Dom)
   (p : LP) : Prop :=
     match p with
-    | x [=] y      => (Valt M s x) = (Valt M s y)
+    | x [=] y     => (Valt M s x) == (Valt M s y)
     | Pd0 _ c     => Pd0M c
     | Pd1 _ c x   => Pd1M c (Valt M s x)
     | Pd2 _ c x y => Pd2M c (Valt M s x) (Valt M s y)
-    | q [->] r     => (Valp M s q) -> (Valp M s r)   
-    | [~] q        => ~ (Valp M s q)
-    | fal q       => forall (t : V), Valp M (t;s) q
+    | q [->] r    => (Valp M s q) -> (Valp M s r)   
+    | [~] q       => ~ (Valp M s q)
+    | fal q       => forall (t : Dom), Valp M (t;s) q
     end.
 
-  Definition models M p := forall s, Valp M s p.
+End TarskiSemantics.
+
+  Definition models {L : Lang} M p := forall s, Valp M s p.
   Notation "M |= p" := (models M p) (at level 99).
-  Definition modelsTh M (T :Th) := forall p, T p -> M |= p.
+  Definition modelsTh {L : Lang} M (T :Th) := forall p, T p -> M |= p.
   Notation "M |=th T" := (modelsTh M T) (at level 99).
-  Definition SValid (T : Th) p := forall M, modelsTh M T -> M |= p.
+  Definition SValid {L : Lang} (T : Th) p := forall M, modelsTh M T -> M |= p.
   Notation "T ||= p" := (SValid T p) (at level 99).
+  Definition function_equiv {L : Lang} {M : Model L} (s0 s1 : nat -> @Dom _ _) := forall n, s0 n == s1 n.
+  Notation " x ~ y " := (function_equiv x y) (at level 70, no associativity).  
 
-  Lemma Valt_s_eq : forall M s0 s1 t, (s0 = s1) -> Valt M s0 t = Valt M s1 t.
-Proof.
-  intros.
-  rewrite H.
-  auto.
-Qed.
+Section Semantics.
 
-Lemma Val_s_imp : forall M p s0 s1, (s0 = s1) -> Valp M s0 p -> Valp M s1 p.
-Proof.
-  assert (forall M p s0 s1, (s0 = s1) -> Valp M s0 p <-> Valp M s1 p).
-  - induction p.
-    + simpl.
-      intros.
-      rewrite <- H.
+  Variable L : Lang.
+
+  Lemma Valt_s_rew : forall M t, Proper (function_equiv ==> equiv) (fun s => Valt M s t).
+  Proof.
+    intros.
+    unfold Proper, respectful.
+    intros.
+    induction t.
+    - simpl. auto.
+    - simpl. reflexivity.
+    - simpl. reflexivity.
+    - simpl.
+      rewrite <- IHt.
       reflexivity.
-    + simpl.
-      intros.
+    - simpl.
+      rewrite <- IHt1.
+      rewrite <- IHt2.
       reflexivity.
-    + simpl.
-      intros.
-      rewrite <- H.
-      reflexivity.
-    + simpl.
-      intros.
-      rewrite <- H.
-      reflexivity.
-    + simpl.
-      intros.
-      rewrite <- IHp1.
-      rewrite <- IHp2.
-      reflexivity.
-      auto. auto.
-    + simpl.
-      intros.
-      rewrite <- IHp.
-      reflexivity.
-      auto.
-    + simpl.
-      intros.
-      assert (forall t, Valp M (t;s0) p <-> Valp M (t;s1) p).
-      intros. apply IHp.
-      rewrite -> H.
-      reflexivity.
-      split.
-      intros.
-      rewrite <- H0.
-      auto.
-      intros.
-      rewrite -> H0.
-      auto.
-  - apply H. 
-Qed.
+  Qed.
+
+  Lemma Valp_s_rew : forall M p, Proper (function_equiv ==> iff) (fun s => Valp M s p).
+  Proof.
+    intros.
+    assert (vtse:=@Valt_s_rew M).
+    unfold Proper, respectful.
+    assert (forall q s0 s1, (s0 ~ s1) -> Valp M s0 q <-> Valp M s1 q).
+    - induction q.
+      + simpl.
+        intros.
+        rewrite <- (Valt_s_rew _ H).
+        rewrite <- (Valt_s_rew _ H).
+        reflexivity.
+      + simpl.
+        intros.
+        reflexivity.
+      + simpl.
+        intros.
+        rewrite <- (Valt_s_rew _ H).
+        reflexivity.
+      + simpl.
+        intros.
+        rewrite <- (Valt_s_rew _ H).
+        rewrite <- (Valt_s_rew _ H).
+        reflexivity.
+      + simpl.
+        intros.
+        rewrite <- (IHq1 s0 s1).
+        rewrite <- (IHq2 s0 s1).
+        reflexivity.
+        auto. auto.
+      + simpl.
+        intros.
+        rewrite <- (IHq s0 s1).
+        reflexivity.
+        auto.
+      + simpl.
+        intros.
+        assert (forall t, Valp M (t;s0) q <-> Valp M (t;s1) q).
+        intros. apply IHq.
+        {unfold function_equiv. destruct n. simpl. reflexivity. simpl. auto. }
+        split.
+        intros.
+        rewrite <- H0.
+        auto.
+        intros.
+        rewrite -> H0.
+        auto.
+    - apply H. 
+  Qed.
 
   Lemma M_and_destruct : forall M p q, (M |= p [/\] q) <-> (M |= p) /\ (M |= q).
   Proof.
@@ -179,48 +210,53 @@ Qed.
     auto.
   Qed.
 
-  Lemma lc_eq : forall M t s c, Valt M s (rewc c t) = Valt M (fun x => Valt M s (c x)) t.
+  Lemma lc_eq : forall M t s c, Valt M s (rewc c t) == Valt M (fun x => Valt M s (c x)) t.
   Proof.
     induction t.
-    - simpl. auto.
-    - simpl. auto.
-    - simpl. auto.
+    - simpl.
+      reflexivity.
+    - simpl.
+      reflexivity.
+    - simpl.
+      reflexivity.
     - simpl.
       intros.
       rewrite <- IHt.
-      auto.
+      reflexivity.
     - simpl.
       intros.
       rewrite <- IHt1.
       rewrite <- IHt2.
-      auto.
+      reflexivity.
   Qed.
 
-  Lemma shiftc_eq : forall M t s c, Valt M s c = Valt M (t; s) (sfc c).
+  Lemma shiftc_eq : forall M t s c, Valt M s c == Valt M (t; s) (sfc c).
   Proof.
     unfold sfc.
     induction c.
-    - simpl. auto.
-    - simpl. auto.
-    - simpl. auto.
+    - simpl. reflexivity.
+    - simpl. reflexivity.
+    - simpl. reflexivity.
     - simpl.
       rewrite <- IHc.
-      auto.
+      reflexivity.
     - simpl.
       rewrite <- IHc1.
       rewrite <- IHc2.
-      auto.
+      reflexivity.
   Qed.
 
-  Lemma lp_iff0 : forall M p s0 s1 u, (forall n, s0 n = Valt M s1 (u n)) -> Valp M s0 p <-> Valp M s1 p .[u].
+  Lemma lp_iff0 : forall M p s0 s1 u, (forall n, s0 n == Valt M s1 (u n)) -> Valp M s0 p <-> Valp M s1 p.[u].
   Proof.
+    intros M.
     induction p.
     - simpl.
       intros.
       rewrite -> lc_eq. rewrite -> lc_eq.
-      assert (seq : s0 = (fun x : nat => Valt M s1 (u x))).
-      apply functional_extensionality. auto.                      
-      rewrite <- seq.
+      assert (s0 ~ (fun x : nat => Valt M s1 (u x))).
+      {unfold function_equiv. auto. }
+      rewrite <- (Valt_s_rew _ H).
+      rewrite <- (Valt_s_rew _ H).
       reflexivity.
     - simpl.
       intros.
@@ -228,16 +264,17 @@ Qed.
     - simpl.
       intros.
       rewrite -> lc_eq.
-      assert (seq : s0 = (fun x : nat => Valt M s1 (u x))).
-      apply functional_extensionality. auto.      
-      rewrite <- seq.
+      assert (s0 ~ (fun x : nat => Valt M s1 (u x))).
+      {unfold function_equiv. auto. }
+      rewrite <- (Valt_s_rew _ H0).
       reflexivity.
     - simpl.
       intros.
       rewrite -> lc_eq. rewrite -> lc_eq.
-      assert (seq : s0 = (fun x : nat => Valt M s1 (u x))).
-      apply functional_extensionality. auto.                      
-      rewrite <- seq.
+      assert (s0 ~ (fun x : nat => Valt M s1 (u x))).
+      {unfold function_equiv. auto. }
+      rewrite <- (Valt_s_rew _ H0).
+      rewrite <- (Valt_s_rew _ H0).
       reflexivity.
     - simpl.
       intros.
@@ -251,12 +288,11 @@ Qed.
       auto.
     - simpl.
       intros.
-      assert (miff : forall t, Valp M (t; s0) p <-> Valp M (t; s1) (p) .['0; fun x => sfc (u x)]).
+      assert (miff : forall t, Valp M (t; s0) p <-> Valp M (t; s1) p.['0; fun x => sfc (u x)]).
       + intros.
         apply IHp.
-        intros.
         destruct n.
-        simpl. auto.
+        simpl. reflexivity.
         simpl. rewrite <- shiftc_eq. auto.
       + split.
         intros.
@@ -265,11 +301,11 @@ Qed.
         apply miff. auto.
   Qed.
 
-  Lemma lp_iff1 : forall M p s u, Valp M (fun n => Valt M s (u n)) p <-> Valp M s p .[u].
+  Lemma lp_iff1 : forall M p s u, Valp M (fun n => Valt M s (u n)) p <-> Valp M s p.[u].
   Proof.
     intros.
     apply lp_iff0.
-    auto.
+    reflexivity.
   Qed.
 
   Lemma mthsfT: forall M T, modelsTh M T -> modelsTh M (sfT T).
@@ -331,23 +367,39 @@ Qed.
         simpl. auto.
       + rewrite <-  H1.
         auto.
-    - simpl. auto.
+    - simpl.
+      intros.
+      reflexivity.
     - simpl.
       intros.
       rewrite <- lp_iff1.
       rewrite <- lp_iff1 in H1.
-      assert ((fun n => Valt M s ((t; \0) n)) = (fun n => Valt M s ((u; \0) n))).
-      + apply functional_extensionality.
-        intros.
-        destruct x.
+      assert ((fun n => Valt M s ((t; \0) n)) ~ (fun n => Valt M s ((u; \0) n))).
+      + unfold function_equiv.
+        destruct n.
         simpl. auto.
-        simpl. auto.
-      + rewrite <- H2.
+        simpl. reflexivity.
+      + rewrite <- (Valp_s_rew _ H2).
         auto.
   Qed.
 
-End TarskiSemantics.
+End Semantics.
 
-Notation "M |= p" := (models M p) (at level 99).
-Notation "M |=th T" := (modelsTh M T) (at level 99).
-Notation "M |=th T" := (modelsTh M T) (at level 99).
+Section DModel.
+
+  Variable A : Type.
+  
+  Lemma equiveq : @Equivalence A eq.
+  Proof.
+    split.
+    auto.
+    auto.
+    unfold Transitive.
+    intros.
+    rewrite -> H.
+    auto.
+  Qed.
+  
+  Instance DSetoid : Setoid A := {equiv:=eq; setoid_equiv:=equiveq}.
+
+End DModel.

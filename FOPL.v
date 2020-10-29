@@ -523,6 +523,8 @@ Notation "[0]" := (cns) (at level 0).
 Notation "' v " := (var v) (at level 0).
 Notation "a [=] b" := (eql a b) (at level 60, right associativity).
 Notation "[~] p" := (neg p) (at level 61, right associativity).
+Notation "[fal] p" := (fal p) (at level 66, right associativity).
+Notation "[ext] p" := (ext p) (at level 66, right associativity).
 Notation "p [->] q" := (imp p q) (at level 62, right associativity, q at level 200).
 
 Notation "p [/\] q" := (andl p q) (at level 63, right associativity).
