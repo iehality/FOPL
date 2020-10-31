@@ -646,80 +646,8 @@ Ltac REWRITE u := apply eql_rewrite with (t:=u).
 Ltac SYMMETRY := apply eql_refl.
 Ltac WL := apply weakening.
 
-Definition preq {L :Lang} (T :Th) (c d :LC) := T |- c[=]d.
-
-Lemma preq_Equiv : forall (L :Lang) T, Equivalence (preq T).
-Proof.
-  unfold preq.
-  intros.
-  split.
-  - unfold Reflexive.
-    intros.
-    AX.
-  - unfold Symmetric.
-    intros.
-    SYMMETRY.
-    auto.
-  - unfold Transitive.
-    apply eql_trans.
-Qed.
-
-Instance Setoid_LC {L :Lang} (T : Th) : Setoid LC := {equiv:=preq T; setoid_equiv:=preq_Equiv T}.
-
-Lemma rew_LP : forall {L : Lang} T p, Proper (@equiv _ (Setoid_LC T) ==> iff) (fun t => T |- p.(t)).
-Proof.
-  unfold Proper, respectful, equiv.
-  simpl. unfold preq.
-  intros.
-  split.
-  - intros.
-    MP (p.(x)). auto.
-    MP (x[=]y). auto.
-    AX.
-  - intros.
-    MP (p.(y)). auto.
-    MP (y[=]x).
-    SYMMETRY. auto.
-    AX.
-Qed.
-
-Lemma rew_LC : forall {L : Lang} T t, Proper (@equiv _ (Setoid_LC T) ==> @equiv _ (Setoid_LC T)) (fun c => rewc (c;\0) t).
-Proof.
-  unfold Proper, respectful, equiv. 
-  simpl.
-  unfold preq.
-  intros.
-  induction t.
-  - simpl.
-    intros.
-    destruct n.
-    simpl. auto.
-    simpl. AX.
-  - simpl. intros. AX.
-  - simpl. intros. AX.
-  - simpl.
-    assert((Fc1 f (sfc (rewc (x; \0) t)) [=] Fc1 f '0).(rewc (y; \0) t) = (Fc1 f (rewc (x; \0) t) [=] Fc1 f (rewc (y; \0) t))).
-    simpl. rewrite <- rewc_sfc. auto.
-    rewrite <- H0.
-    rewrite <- (rew_LP _ IHt).
-    simpl.
-    rewrite <- rewc_sfc.
-    AX.
-  - simpl.
-    assert(())
-
-
-  intros.
-
-
-
-Lemma rew_LP : forall {L : Lang} T p, Proper (@equiv _ (Setoid_LC T) ==> iff) (fun t => T |- p.(t)).
-Proof.
-  intros.
-  unfold Proper, respectful.
-  intros.
-
-
+Section Sentence_theory.
+  Variable L :Lang.
 
   Definition SentTh (T : Th) := forall p, T p -> Ar p = 0.
 
@@ -783,22 +711,4 @@ Proof.
     auto.
   Qed.
 
-  Lemma inj : forall T s0 s1 t, (forall n, T |- (s0 n)[=](s1 n)) -> (T |- (rewc s0 t)[=](rewc s1 t)).
-  Proof.
-    induction t.
-    - simpl. intros. auto.
-    - simpl. intros. AX.
-    - simpl. intros. AX.
-    - simpl.
-      intros.
-      MP (Fc1 f (rewc s0 t) [=] Fc1 f (rewc s0 t)).
-      AX.
-      assert(forall u, (Fc1 f (sfc (rewc s0 t)) [=] Fc1 f '0).(u) = (Fc1 f (rewc s0 t) [=] Fc1 f u)).
-      intros. simpl. rewrite <- rewc_sfc. reflexivity.
-      repeat rewrite <- H0.
-      MP (rewc s0 t [=] rewc s1 t). auto.
-      AX.
-    - simpl.
-      intros.
-
-End DeductionSystem.
+End Sentence_theory.

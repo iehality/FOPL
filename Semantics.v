@@ -57,10 +57,10 @@ Section TarskiSemantics.
   (t : LC) : Dom :=
     match t with
     | 'm          => s m 
-    | [0]         => cnsM
-    | Fc0 _ c     => Fc0M c
-    | Fc1 _ c x   => Fc1M c (Valt M s x)
-    | Fc2 _ c x y => Fc2M c (Valt M s x) (Valt M s y)
+    | [O]         => cnsM
+    | Fc0 c     => Fc0M c
+    | Fc1 c x   => Fc1M c (Valt M s x)
+    | Fc2 c x y => Fc2M c (Valt M s x) (Valt M s y)
     end.
 
   Fixpoint Valp
@@ -69,9 +69,9 @@ Section TarskiSemantics.
   (p : LP) : Prop :=
     match p with
     | x [=] y     => (Valt M s x) == (Valt M s y)
-    | Pd0 _ c     => Pd0M c
-    | Pd1 _ c x   => Pd1M c (Valt M s x)
-    | Pd2 _ c x y => Pd2M c (Valt M s x) (Valt M s y)
+    | Pd0 c     => Pd0M c
+    | Pd1 c x   => Pd1M c (Valt M s x)
+    | Pd2 c x y => Pd2M c (Valt M s x) (Valt M s y)
     | q [->] r    => (Valp M s q) -> (Valp M s r)   
     | [~] q       => ~ (Valp M s q)
     | fal q       => forall (t : Dom), Valp M (t;s) q
@@ -92,72 +92,74 @@ Section Semantics.
 
   Variable L : Lang.
 
-  Lemma Valt_s_rew : forall M t, Proper (function_equiv ==> equiv) (fun s => Valt M s t).
+  Instance Valt_s_rew : forall M, Proper (function_equiv ==> eq ==> equiv) (Valt M).
   Proof.
-    intros.
     unfold Proper, respectful.
-    intros.
-    induction t.
-    - simpl. auto.
-    - simpl. reflexivity.
-    - simpl. reflexivity.
-    - simpl.
-      rewrite <- IHt.
-      reflexivity.
-    - simpl.
-      rewrite <- IHt1.
-      rewrite <- IHt2.
-      reflexivity.
+    intros M s0 s1 H.
+    assert(forall t, Valt M s0 t == Valt M s1 t).
+    - induction t.
+      + simpl. auto.
+      + simpl. reflexivity.
+      + simpl. reflexivity.
+      + simpl.
+        rewrite <- IHt.
+        reflexivity.
+      + simpl.
+        rewrite <- IHt1.
+        rewrite <- IHt2.
+        reflexivity.
+    - intros.
+      rewrite <- H1.
+      auto. 
   Qed.
 
-  Lemma Valp_s_rew : forall M p, Proper (function_equiv ==> iff) (fun s => Valp M s p).
+  Instance Valp_s_rew : forall M, Proper (function_equiv ==> eq ==> iff) (Valp M).
   Proof.
-    intros.
-    assert (vtse:=@Valt_s_rew M).
     unfold Proper, respectful.
+    intros M s0 s1 H.
     assert (forall q s0 s1, (s0 ~ s1) -> Valp M s0 q <-> Valp M s1 q).
     - induction q.
       + simpl.
         intros.
-        rewrite <- (Valt_s_rew _ H).
-        rewrite <- (Valt_s_rew _ H).
+        rewrite <- H0.
         reflexivity.
       + simpl.
         intros.
         reflexivity.
       + simpl.
         intros.
-        rewrite <- (Valt_s_rew _ H).
+        rewrite <- H0.
         reflexivity.
       + simpl.
         intros.
-        rewrite <- (Valt_s_rew _ H).
-        rewrite <- (Valt_s_rew _ H).
+        rewrite <- H0.
         reflexivity.
       + simpl.
         intros.
-        rewrite <- (IHq1 s0 s1).
-        rewrite <- (IHq2 s0 s1).
+        rewrite <- (IHq1 s2 s3).
+        rewrite <- (IHq2 s2 s3).
         reflexivity.
         auto. auto.
       + simpl.
         intros.
-        rewrite <- (IHq s0 s1).
+        rewrite <- (IHq s2 s3).
         reflexivity.
         auto.
       + simpl.
         intros.
-        assert (forall t, Valp M (t;s0) q <-> Valp M (t;s1) q).
+        assert (forall t, Valp M (t;s2) q <-> Valp M (t;s3) q).
         intros. apply IHq.
         {unfold function_equiv. destruct n. simpl. reflexivity. simpl. auto. }
         split.
         intros.
-        rewrite <- H0.
+        rewrite <- H1.
         auto.
         intros.
-        rewrite -> H0.
+        rewrite -> H1.
         auto.
-    - apply H. 
+    - intros.
+      rewrite <- H1.
+      auto.
   Qed.
 
   Lemma M_and_destruct : forall M p q, (M |= p [/\] q) <-> (M |= p) /\ (M |= q).
@@ -255,8 +257,7 @@ Section Semantics.
       rewrite -> lc_eq. rewrite -> lc_eq.
       assert (s0 ~ (fun x : nat => Valt M s1 (u x))).
       {unfold function_equiv. auto. }
-      rewrite <- (Valt_s_rew _ H).
-      rewrite <- (Valt_s_rew _ H).
+      rewrite <- H0.
       reflexivity.
     - simpl.
       intros.
@@ -266,15 +267,14 @@ Section Semantics.
       rewrite -> lc_eq.
       assert (s0 ~ (fun x : nat => Valt M s1 (u x))).
       {unfold function_equiv. auto. }
-      rewrite <- (Valt_s_rew _ H0).
+      rewrite <- H0.
       reflexivity.
     - simpl.
       intros.
       rewrite -> lc_eq. rewrite -> lc_eq.
       assert (s0 ~ (fun x : nat => Valt M s1 (u x))).
       {unfold function_equiv. auto. }
-      rewrite <- (Valt_s_rew _ H0).
-      rewrite <- (Valt_s_rew _ H0).
+      rewrite <- H0.
       reflexivity.
     - simpl.
       intros.
@@ -379,7 +379,7 @@ Section Semantics.
         destruct n.
         simpl. auto.
         simpl. reflexivity.
-      + rewrite <- (Valp_s_rew _ H2).
+      + rewrite <- H2.
         auto.
   Qed.
 

@@ -129,7 +129,6 @@ Notation "p ..( x )" := (p .[(x.;\0)]) (at level 0).
 Notation "p ..( x , y )" := (p .[(x.;(y.;\0))]) (at level 0).
 Notation "p ..( x , y , z )" := (p .[(x.;(y.;(z.;\0)))]) (at level 0).
 
-
 (** ** Syntax Facts *)
 Section basic_facts.
   Variable L : Lang.
