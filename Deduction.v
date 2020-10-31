@@ -1,6 +1,4 @@
 Require Import Arith.
-Require Export SetoidClass.
-Require Export RelationClasses.
 Require Import Lia.
 Require Import FOPL.FOPL.
 (* coqc -Q FOPL FOPL FOPL/Deduction.v *)
@@ -438,6 +436,7 @@ Section deduction_facts.
   Lemma destruct_iff : forall T p q, (T |- p [->] q) -> (T |- q [->] p) -> (T |- p [<->] q).
   Proof.
     intros.
+    unfold iffl.
     apply destruct_and.
     auto.
     auto.

@@ -65,20 +65,21 @@ Inductive LP {L : Lang} :=
 | neg : LP -> LP
 | fal : LP -> LP.
 
-Definition andl {L : Lang} p q := neg (imp p (neg q)).
-Definition orl {L : Lang}  p q := imp (neg p) q.
-Definition ext {L : Lang}  p := neg (fal (neg p)).
-
-Notation "[O]" := (cns) (at level 0).
 Notation "' v " := (var v) (at level 5).
+Notation "[O]" := (cns) (at level 0).
 Notation "a [=] b" := (eql a b) (at level 60, right associativity).
+Notation "p [->] q" := (imp p q) (at level 62, right associativity, q at level 200).
 Notation "[~] p" := (neg p) (at level 61, right associativity).
 Notation "[fal] p" := (fal p) (at level 66, right associativity).
-Notation "[ext] p" := (ext p) (at level 66, right associativity).
-Notation "p [->] q" := (imp p q) (at level 62, right associativity, q at level 200).
+
+Definition andl {L : Lang} p q := neg (imp p (neg q)).
 Notation "p [/\] q" := (andl p q) (at level 63, right associativity).
+Definition orl {L : Lang}  p q := imp (neg p) q.
 Notation "p [\/] q" := (orl p q) (at level 64, right associativity).
-Notation "p [<->] q" := ((p [->] q) [/\] (q [->] p)) (at level 65, right associativity, q at level 200).
+Definition iffl {L : Lang} p q := (p[->]q)[/\](q[->]p).
+Notation "p [<->] q" := (iffl p q) (at level 65, right associativity, q at level 200).
+Definition ext {L : Lang}  p := neg (fal (neg p)).
+Notation "[ext] p" := (ext p) (at level 66, right associativity).
 
 Definition slide {A : Type} (s : nat -> A) (n : A) : nat -> A := fun x0 => 
   match x0 with
