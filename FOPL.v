@@ -4,7 +4,7 @@ Require Import Arith.
 Require Import Lia.
 (* coqc -Q FOPL FOPL FOPL/FOPL.v *)
 
-Section FirstOrderPredicateLogic.
+
 (**)
 
   Lemma lt_lt_max_l : forall n m r, n < m -> n < max m r.
@@ -47,81 +47,92 @@ Section FirstOrderPredicateLogic.
 
 (**)
 
-  Class Lang := {fc0 : Type; fc1 : Type; fc2 : Type; pd0 : Type; pd1 : Type; pd2 : Type}.
-  Variable L : Lang.
+Class Lang := {fc0 : Type; fc1 : Type; fc2 : Type; pd0 : Type; pd1 : Type; pd2 : Type}.
 
-  Inductive LC :=
-  | var : nat -> LC
-  | cns : LC
-  | Fc0 : fc0 -> LC
-  | Fc1 : fc1 -> LC -> LC
-  | Fc2 : fc2 -> LC -> LC -> LC.
+Inductive LC {L : Lang} :=
+| var : nat -> LC
+| cns : LC
+| Fc0 : fc0 -> LC
+| Fc1 : fc1 -> LC -> LC
+| Fc2 : fc2 -> LC -> LC -> LC.
 
-  Inductive LP :=
-  | eql : LC -> LC -> LP
-  | Pd0 : pd0 -> LP
-  | Pd1 : pd1 -> LC -> LP
-  | Pd2 : pd2 -> LC -> LC -> LP
-  | imp : LP -> LP -> LP
-  | neg : LP -> LP
-  | fal : LP -> LP.
+Inductive LP {L : Lang} :=
+| eql : LC -> LC -> LP
+| Pd0 : pd0 -> LP
+| Pd1 : pd1 -> LC -> LP
+| Pd2 : pd2 -> LC -> LC -> LP
+| imp : LP -> LP -> LP
+| neg : LP -> LP
+| fal : LP -> LP.
 
-  Definition andl p q := neg (imp p (neg q)).
-  Definition orl p q := imp (neg p) q.
-  Definition ext p := neg (fal (neg p)).
+Definition andl {L : Lang} p q := neg (imp p (neg q)).
+Definition orl {L : Lang}  p q := imp (neg p) q.
+Definition ext {L : Lang}  p := neg (fal (neg p)).
 
-  Definition slide {A : Type} (s : nat -> A) (n : A) : nat -> A := fun x0 => 
-    match x0 with
-    | 0 => n
-    | S m => s m
-    end.
+Notation "[O]" := (cns) (at level 0).
+Notation "' v " := (var v) (at level 5).
+Notation "a [=] b" := (eql a b) (at level 60, right associativity).
+Notation "[~] p" := (neg p) (at level 61, right associativity).
+Notation "[fal] p" := (fal p) (at level 66, right associativity).
+Notation "[ext] p" := (ext p) (at level 66, right associativity).
+Notation "p [->] q" := (imp p q) (at level 62, right associativity, q at level 200).
+Notation "p [/\] q" := (andl p q) (at level 63, right associativity).
+Notation "p [\/] q" := (orl p q) (at level 64, right associativity).
+Notation "p [<->] q" := ((p [->] q) [/\] (q [->] p)) (at level 65, right associativity, q at level 200).
 
-  Definition embed {A : Type} (s : nat -> A) (a : A) : nat -> A := fun n => 
-    match n with 
-    | 0 => a 
-    | _ => s n 
-    end.
+Definition slide {A : Type} (s : nat -> A) (n : A) : nat -> A := fun x0 => 
+  match x0 with
+  | 0 => n
+  | S m => s m
+  end.
   
-  Notation "( n ; s )" := (slide s n) (at level 0).
-  Notation "( n .; s )" := (embed s n) (at level 0).
+Definition embed {A : Type} (s : nat -> A) (a : A) : nat -> A := fun n => 
+  match n with 
+  | 0 => a 
+  | _ => s n 
+  end.
 
-  Fixpoint rewc (s : nat -> LC) (c : LC) : LC :=
-    match c with
-    | var v     => s v
-    | cns      => cns
-    | Fc0 c     => Fc0 c
-    | Fc1 c x   => Fc1 c (rewc s x)
-    | Fc2 c x y => Fc2 c (rewc s x) (rewc s y)
-    end.
+Notation "( n ; s )" := (slide s n) (at level 0).
+Notation "( n .; s )" := (embed s n) (at level 0).
 
-  Definition sfc (c : LC) := rewc (fun x => (var (S x))) c.
+Fixpoint rewc {L : Lang} (s : nat -> LC) (c : LC) : LC :=
+  match c with
+  | var v     => s v
+  | cns       => cns
+  | Fc0 c     => Fc0 c
+  | Fc1 c x   => Fc1 c (rewc s x)
+  | Fc2 c x y => Fc2 c (rewc s x) (rewc s y)
+  end.
 
-  Fixpoint rew (s : nat -> LC) (p0 : LP) : LP :=
-    match p0 with
-    | eql x y   => eql (rewc s x) (rewc s y)
-    | Pd0 c     => Pd0 c
-    | Pd1 c x   => Pd1 c (rewc s x)
-    | Pd2 c x y => Pd2 c (rewc s x) (rewc s y)
-    | imp p q   => imp (rew s p) (rew s q)
-    | neg p     => neg (rew s p)
-    | fal p     => fal (rew ((var 0); fun x => (sfc (s x))) p)
-    end.
+Definition sfc {L : Lang} (c : LC) := rewc (fun x => (var (S x))) c.
 
-  Notation "p .[ s ]" := (rew s p) (at level 0).
-  Notation "p .[ n ; s ]" := (p .[(n;s)]) (at level 0).
-  Notation "\0" := (fun x => (var x)) (at level 0).
+Fixpoint rew {L : Lang} (s : nat -> LC) (p0 : LP) : LP :=
+  match p0 with
+  | eql x y   => eql (rewc s x) (rewc s y)
+  | Pd0 c     => Pd0 c
+  | Pd1 c x   => Pd1 c (rewc s x)
+  | Pd2 c x y => Pd2 c (rewc s x) (rewc s y)
+  | imp p q   => imp (rew s p) (rew s q)
+  | neg p     => neg (rew s p)
+  | fal p     => fal (rew ((var 0); fun x => (sfc (s x))) p)
+  end.
 
-  Definition sf (p : LP) : LP := p .[fun x => (var (S x))].
-  Definition norm c p := p .[fun x => c].
-  Notation "p .( x )" := (p .[x;\0]) (at level 0).
-  Notation "p .( x , y )" := (p .[x; (y; \0)]) (at level 0).
-  Notation "p .( x , y , z )" := (p .[x; (y; (z; \0))]) (at level 0).
-  Notation "p ..( x )" := (p .[(x.;\0)]) (at level 0).
-  Notation "p ..( x , y )" := (p .[(x.;(y.;\0))]) (at level 0).
-  Notation "p ..( x , y , z )" := (p .[(x.;(y.;(z.;\0)))]) (at level 0).
+Notation "p .[ s ]" := (rew s p) (at level 0).
+Notation "p .[ n ; s ]" := (p .[(n;s)]) (at level 0).
+Notation "\0" := (fun x => (var x)) (at level 0).
+Definition sf {L : Lang} (p : LP) : LP := p .[fun x => (var (S x))].
+Definition norm {L : Lang} c p := p .[fun x => c].
+Notation "p .( x )" := (p .[x;\0]) (at level 0).
+Notation "p .( x , y )" := (p .[x; (y; \0)]) (at level 0).
+Notation "p .( x , y , z )" := (p .[x; (y; (z; \0))]) (at level 0).
+Notation "p ..( x )" := (p .[(x.;\0)]) (at level 0).
+Notation "p ..( x , y )" := (p .[(x.;(y.;\0))]) (at level 0).
+Notation "p ..( x , y , z )" := (p .[(x.;(y.;(z.;\0)))]) (at level 0).
 
 
 (** ** Syntax Facts *)
+Section basic_facts.
+  Variable L : Lang.
 
   Lemma nested_rewc : forall s0 s1 t, rewc (fun x => rewc s1 (s0 x)) t = (rewc s1 (rewc s0 t)).
   Proof.
@@ -214,27 +225,98 @@ Section FirstOrderPredicateLogic.
     auto.
   Qed.
 
-  (** Ar $n$ $p$ $\iff$ $p$ has a variables $(varm)$ for $n \leq m$ *)
-  
-  Fixpoint Art (t0 : LC) : nat :=
-    match t0 with
-    | var n     => S n
-    | cns      => 0
-    | Fc0 _     => 0
-    | Fc1 _ x   => Art x
-    | Fc2 _ x y => max (Art x) (Art y)
-    end.
+  Lemma fal_eq : forall p q, p = q -> [fal]p = [fal]q.
+  Proof.
+    intros.
+    rewrite <- H.
+    reflexivity.
+  Qed.
 
-  Fixpoint Ar (p0 : LP) : nat :=
-    match p0 with
-    | eql t u   => max (Art t) (Art u)
-    | Pd0 _     => 0
-    | Pd1 _ x   => Art x
-    | Pd2 _ x y => max (Art x) (Art y)
-    | imp p q   => max (Ar p) (Ar q)
-    | neg p     => Ar p
-    | fal p     => Ar p - 1
-    end.
+  Lemma rewc_id : forall t, t = rewc \0 t.
+  Proof.
+    induction t.
+    - simpl. auto.
+    - simpl. auto.
+    - simpl. auto.
+    - simpl. 
+      rewrite <- IHt.
+      auto.
+    - simpl.
+      rewrite <- IHt1.
+      rewrite <- IHt2.
+      auto.
+  Qed.
+
+  Lemma rew_id : forall p, p = p.[\0].
+  Proof.
+    induction p.
+    - simpl. 
+      rewrite <- rewc_id.
+      rewrite <- rewc_id.
+      auto.
+    - simpl. auto.
+    - simpl. 
+      rewrite <- rewc_id.
+      auto.
+    - simpl.
+      rewrite <- rewc_id.
+      rewrite <- rewc_id.
+      auto.
+    - simpl.
+      rewrite <- IHp1.
+      rewrite <- IHp2.
+      auto.
+    - simpl.
+      rewrite <- IHp.
+      auto.
+    - simpl.
+      assert (\0 = ((var 0); fun x => sfc (var x))).
+      + unfold sfc.
+        apply functional_extensionality.
+        intros.
+        destruct x.
+        simpl.
+        auto.
+        simpl.
+        auto.
+      + rewrite <- H.
+        rewrite <- IHp.
+        auto.
+  Qed.
+
+  Lemma rewc_sfc : forall t u, t = rewc (u; \0) (sfc t).
+  Proof.
+    unfold sfc.
+    intros.
+    rewrite <- nested_rewc.
+    simpl.
+    apply rewc_id.
+  Qed.
+
+End basic_facts.
+  
+Fixpoint Art {L : Lang} (t0 : LC) : nat :=
+  match t0 with
+  | var n     => S n
+  | cns       => 0
+  | Fc0 _     => 0
+  | Fc1 _ x   => Art x
+  | Fc2 _ x y => max (Art x) (Art y)
+  end.
+
+Fixpoint Ar {L : Lang} (p0 : LP) : nat :=
+  match p0 with
+  | eql t u   => max (Art t) (Art u)
+  | Pd0 _     => 0
+  | Pd1 _ x   => Art x
+  | Pd2 _ x y => max (Art x) (Art y)
+  | imp p q   => max (Ar p) (Ar q)
+  | neg p     => Ar p
+  | fal p     => Ar p - 1
+  end.
+
+Section rew_facts.
+  Variable L : Lang.
 
   Lemma rewc_rewc : forall t s0 s1, (forall n, n < Art t -> s0 n = s1 n) -> rewc s0 t = rewc s1 t.
   Proof.
@@ -356,58 +438,6 @@ Section FirstOrderPredicateLogic.
         auto.
   Qed.
 
-  Lemma rewc_id : forall t, t = rewc \0 t.
-  Proof.
-    induction t.
-    - simpl. auto.
-    - simpl. auto.
-    - simpl. auto.
-    - simpl. 
-      rewrite <- IHt.
-      auto.
-    - simpl.
-      rewrite <- IHt1.
-      rewrite <- IHt2.
-      auto.
-  Qed.
-
-  Lemma rew_id : forall p, p = p .[\0].
-  Proof.
-    induction p.
-    - simpl. 
-      rewrite <- rewc_id.
-      rewrite <- rewc_id.
-      auto.
-    - simpl. auto.
-    - simpl. 
-      rewrite <- rewc_id.
-      auto.
-    - simpl.
-      rewrite <- rewc_id.
-      rewrite <- rewc_id.
-      auto.
-    - simpl.
-      rewrite <- IHp1.
-      rewrite <- IHp2.
-      auto.
-    - simpl.
-      rewrite <- IHp.
-      auto.
-    - simpl.
-      assert (\0 = ((var 0); fun x => sfc (var x))).
-      + unfold sfc.
-        apply functional_extensionality.
-        intros.
-        destruct x.
-        simpl.
-        auto.
-        simpl.
-        auto.
-      + rewrite <- H.
-        rewrite <- IHp.
-        auto.
-  Qed.
-
   Lemma constant_rew : forall t s, Art t = 0 -> t = rewc s t.
   Proof.
     intros.
@@ -486,47 +516,74 @@ Section FirstOrderPredicateLogic.
     lia.
   Qed.
 
-End FirstOrderPredicateLogic.
+End rew_facts.
 
-Arguments cns {_}.
-Arguments var {_}.
-Arguments eql {_}.
-Arguments neg {_}.
-Arguments imp {_}.
-Arguments andl {_}.
-Arguments orl {_}.
-Arguments fal {_}.
-Arguments ext {_}.
-Arguments LC {_}.
-Arguments LP {_}.
-Arguments rewc {_}.
-Arguments rew {_}.
-Arguments Art {_}.
-Arguments Ar {_}.
-Arguments sfc {_}.
-Arguments sf {_}.
+Fixpoint minvt {L : Lang} (n0 : nat) (t0 : LC) : Prop :=
+  match t0 with
+  | var n     => n0 <= n
+  | Fc1 _ x   => minvt n0 x
+  | Fc2 _ x y => (minvt n0 x) /\ (minvt n0 y)
+  | _         => True
+  end.
 
-Notation "( n ; s )" := (slide s n) (at level 0).
-Notation "( n .; s )" := (embed s n) (at level 0).
-Notation "p .[ s ]" := (rew s p) (at level 0).
-Notation "p .[ n ; s ]" := (p .[(n;s)]) (at level 0).
-Notation "\0" := (fun x => (var x)) (at level 0).
+Fixpoint minv {L : Lang} (n0 : nat) (p0 : LP) : Prop :=
+  match p0 with
+  | t[=]u     => (minvt n0 t) /\ (minvt n0 u)
+  | Pd1 _ x   => minvt n0 x
+  | Pd2 _ x y => (minvt n0 x) /\ (minvt n0 y)
+  | imp p q   => (minv n0 p) /\ (minv n0 q)
+  | neg p     => minv n0 p 
+  | fal p     => minv (S n0) p
+  | _         => True
+  end.
 
-Notation "p .( x )" := (p .[x;\0]) (at level 0).
-Notation "p .( x , y )" := (p .[x; (y; \0)]) (at level 0).
-Notation "p .( x , y , z )" := (p .[x; (y; (z; \0))]) (at level 0).
-Notation "p ..( x )" := (p .[(x.;\0)]) (at level 0).
-Notation "p ..( x , y )" := (p .[(x.;(y.;\0))]) (at level 0).
-Notation "p ..( x , y , z )" := (p .[(x.;(y.;(z.;\0)))]) (at level 0).
+Definition fs {L : Lang} (p : LP) : LP := p.[fun x => (var (pred x))].
+Definition fsc {L : Lang} (t : LC) : LC := rewc (fun x => (var (pred x))) t.
 
-Notation "[0]" := (cns) (at level 0).
-Notation "' v " := (var v) (at level 0).
-Notation "a [=] b" := (eql a b) (at level 60, right associativity).
-Notation "[~] p" := (neg p) (at level 61, right associativity).
-Notation "[fal] p" := (fal p) (at level 66, right associativity).
-Notation "[ext] p" := (ext p) (at level 66, right associativity).
-Notation "p [->] q" := (imp p q) (at level 62, right associativity, q at level 200).
+Section fs_facts.
+  Variable L :Lang.
 
-Notation "p [/\] q" := (andl p q) (at level 63, right associativity).
-Notation "p [\/] q" := (orl p q) (at level 64, right associativity).
-Notation "p [<->] q" := ((p [->] q) [/\] (q [->] p)) (at level 65, right associativity, q at level 200).
+  Lemma fs_sf : forall p, p = fs (sf p).
+  Proof.
+    unfold sf, fs.
+    induction p.
+    - simpl.
+      repeat rewrite <- nested_rewc.
+      simpl.
+      rewrite <- rewc_id.
+      rewrite <- rewc_id.
+      auto.
+    - simpl. auto.
+    - simpl.
+      repeat rewrite <- nested_rewc.
+      simpl.
+      rewrite <- rewc_id.
+      auto.
+    - simpl.
+      repeat rewrite <- nested_rewc.
+      simpl.
+      rewrite <- rewc_id.
+      rewrite <- rewc_id.
+      auto.
+    - simpl.
+      rewrite <- IHp1.
+      rewrite <- IHp2.
+      auto.
+    - simpl.
+      rewrite <- IHp.
+      auto.
+    - simpl.
+      unfold sfc.
+      simpl.
+      rewrite -> IHp at 1.
+      repeat rewrite <- nested_rew.
+      apply fal_eq.
+      apply rew_rew.
+      intros.
+      destruct n.
+      simpl. auto.
+      simpl. auto.
+  Qed.
+
+End fs_facts.
+  

@@ -4,18 +4,14 @@ Require Import FOPL.FOPL.
 (* coqc -Q FOPL FOPL FOPL/Deduction.v *)
 
 Set Implicit Arguments.
-
-Section DeductionSystem.
   
-  Variable L : Lang.
-  
-  Definition Th := LP -> Prop.
+Definition Th {L : Lang} := @LP L -> Prop.
   
   (** * Hilbert Style Deduction System *)
   
-  Definition sfT (T : Th) := fun p => exists q, p = sf q /\ T q.
+Definition sfT {L : Lang} (T : Th) := fun p => exists q, p = sf q /\ T q.
   
-  Inductive provable (T : Th) : LP -> Prop :=
+Inductive provable {L : Lang} (T : Th) : LP -> Prop :=
   | GEN  : forall q, provable (sfT T) q -> provable T (fal q)
   | MP   : forall p q, provable T p -> provable T (p [->] q) -> provable T q
   | Pr0  : forall p, T p -> provable T p
@@ -27,23 +23,29 @@ Section DeductionSystem.
   | Qt2  : forall p, provable T (p [->] fal (sf p))
   | Eq0  : forall t, provable T (t [=] t)
   | Eq1  : forall p t u, provable T (t [=] u [->] p.(t) [->] p.(u)).
-  
-  Ltac MP h := apply MP with (p:=h).
+
+  Ltac MP h := apply (@MP _ _ h _).
   Ltac GEN := apply GEN.
   
   Notation "T |- p" := (provable T p) (at level 95).
   
-  Definition Consis (T : Th) := ~ exists p, (T |- p) /\ (T |- [~] p).
+  Definition Consis {L : Lang} (T : Th) := ~ exists p, (T |- p) /\ (T |- [~] p).
   
-  Definition addT (T : Th) p := fun x => T x \/ x = p.
-  Definition elmT (T : Th) p := fun x => T x /\ x <> p.
-  Definition incT (T U : Th) := forall p, T p -> U p.
-  Definition eqvT (T U : Th) := (incT T U) /\ (incT U T).
+  Definition addT {L : Lang} (T : Th) p := fun x => T x \/ x = p.
+  Definition elmT {L : Lang} (T : Th) p := fun x => T x /\ x <> p.
+  Definition incT {L : Lang} (T U : Th) := forall p, T p -> U p.
+  Definition eqvT {L : Lang} (T U : Th) := (incT T U) /\ (incT U T).
   Notation "T :+ p" := (addT T p) (at level 71, left associativity).
   Notation "T :- p" := (elmT T p) (at level 71, left associativity). 
   Notation "T :< U" := (incT T U) (at level 72, left associativity).
   Notation "T :[=] U" := (eqvT T U) (at level 72, left associativity).
+
+  Definition TRUE {L : Lang} := [O][=][O].  
   
+Section DeductionSystem.
+
+  Variable L : Lang.
+
   Lemma p__p : forall T p, T |- p [->] p.
   Proof.
     intros.
@@ -680,21 +682,18 @@ Section DeductionSystem.
     auto.
   Qed.
 
+  Lemma prsfT : forall (T : Th) p, Ar p = 0 -> T p -> (sfT T) p.
+  Proof.
+    intros.
+    unfold sfT, sf.
+    exists p.
+    split.
+    apply sentence_rew. auto.
+    auto.
+  Qed.
+
 End DeductionSystem.
 
-Arguments Th {_}.
-Arguments provable {_}.
-Arguments addT {_}.
-Arguments elmT {_}.
-Arguments incT {_}.
-
-Notation "T |- p" := (provable T p) (at level 95).
-Notation "T :+ p" := (addT T p) (at level 71, left associativity).
-Notation "T :- p" := (elmT T p) (at level 71, left associativity). 
-Notation "T :< U" := (incT T U) (at level 72, left associativity).
-
-Ltac GEN := apply GEN.
-Ltac MP h := apply MP with (p:=h).
 Ltac MPI h := apply MPintro with (p:=h).
 Ltac AX := apply p__p || apply Pr1 || apply Pr2 || apply Pr3 || apply Qt0 || apply Qt1 || apply Qt2 || apply Eq0 || apply Eq1 || unfold addT; apply Pr0; auto.
 Ltac TRANS h := apply imp_trans with (q:=h).

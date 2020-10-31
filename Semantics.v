@@ -385,7 +385,7 @@ Section Semantics.
 
 End Semantics.
 
-Section DModel.
+Section DSetoid.
 
   Variable A : Type.
   
@@ -402,4 +402,4 @@ Section DModel.
   
   Instance DSetoid : Setoid A := {equiv:=eq; setoid_equiv:=equiveq}.
 
-End DModel.
+End DSetoid.

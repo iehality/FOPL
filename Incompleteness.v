@@ -313,18 +313,18 @@ Section Incompleteness.
       intros.
       apply NNPP.
       intro.
-      specialize (H ([~] [0] [=] [0])).
-      assert (~ (T |- ext ([~] [0] [=] [0]))).
+      specialize (H ([~] [O] [=] [O])).
+      assert (~ (T |- ext ([~] [O] [=] [O]))).
       apply H.
       intros.
       simpl.
       apply pNN.
       AX.
-      apply explosion with (p := ext ([~] [0] [=] [0])) in H0.
+      apply explosion with (p := ext ([~] [O] [=] [O])) in H0.
       auto.
     Qed.
   
-    Definition ConGT : LP := [~] PrG.([⌜[~][0][=][0]⌝]).
+    Definition ConGT : LP := [~] PrG.([⌜[~][O][=][O]⌝]).
     Definition G : LP := fixpoint ([~] PrG).
   
     Lemma Gfixpoint : T |- G[<->][~]PrG.([⌜G⌝]).
@@ -421,7 +421,7 @@ Section Incompleteness.
       lia.
     Qed.
 
-    Let ConRT : LP := [~] PrR.([⌜[~][0][=][0]⌝]).
+    Let ConRT : LP := [~] PrR.([⌜[~][O][=][O]⌝]).
 
     Lemma E1R : Consis T -> forall p, (T |- p) <-> (T |- PrR.([⌜p⌝])).
     Proof.
@@ -463,7 +463,7 @@ Section Incompleteness.
     Hypothesis D3 : forall p, T |- Pr.([⌜p⌝]) [->] Pr.([⌜Pr.([⌜p⌝])⌝]).
     
     Definition γ : LP := fixpoint ([~] Pr).
-    Definition ConT : LP := [~] Pr.([⌜[~][0][=][0]⌝]).
+    Definition ConT : LP := [~] Pr.([⌜[~][O][=][O]⌝]).
     
     Lemma nPrfix : T |- γ[<->][~]Pr.([⌜γ⌝]).
     Proof.
