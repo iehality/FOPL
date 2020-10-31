@@ -641,7 +641,6 @@ Ltac SPLIT := apply destruct_iff || apply destruct_and.
 Ltac DESTRUCT h := apply and_destruct in h; destruct h.
 Ltac SPECIALIZE h u := apply fal_R with (t := u) in h.
 Ltac EXISTS u := apply ext_R with (t := u).
-Ltac REWRITE u := apply eql_rewrite with (t:=u).
 Ltac SYMMETRY := apply eql_refl.
 Ltac WL := apply weakening.
 
@@ -709,5 +708,5 @@ Section Sentence_theory.
     apply sentence_rew. auto.
     auto.
   Qed.
-
+  
 End Sentence_theory.

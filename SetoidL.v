@@ -1,9 +1,6 @@
-Require Export Arith.
-Require Export Lia.
 Require Export SetoidClass.
-Require Import Coq.Classes.RelationClasses.
-Require Export FOPL.FOPL.
-Require Export FOPL.Deduction.
+Require Import FOPL.FOPL.
+Require Import FOPL.Deduction.
 
 Definition preq {L :Lang} (T :Th) (c d :LC) := T |- c[=]d.
 Definition priff {L :Lang} (T :Th) (p q :LP) := T |- p[<->]q.

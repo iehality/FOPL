@@ -88,80 +88,80 @@ End TarskiSemantics.
   Definition function_equiv {L : Lang} {M : Model L} (s0 s1 : nat -> @Dom _ _) := forall n, s0 n == s1 n.
   Notation " x ~ y " := (function_equiv x y) (at level 70, no associativity).  
 
+Instance Valt_s_rew : forall (L : Lang) M, Proper (function_equiv ==> eq ==> equiv) (Valt M).
+Proof.
+  unfold Proper, respectful.
+  intros L M s0 s1 H.
+  assert(forall t, Valt M s0 t == Valt M s1 t).
+  - induction t.
+    + simpl. auto.
+    + simpl. reflexivity.
+    + simpl. reflexivity.
+    + simpl.
+      rewrite <- IHt.
+      reflexivity.
+    + simpl.
+      rewrite <- IHt1.
+      rewrite <- IHt2.
+      reflexivity.
+  - intros.
+    rewrite <- H1.
+    auto. 
+Qed.
+
+Instance Valp_s_rew : forall (L : Lang) M, Proper (function_equiv ==> eq ==> iff) (Valp M).
+Proof.
+  unfold Proper, respectful.
+  intros L M s0 s1 H.
+  assert (forall q s0 s1, (s0 ~ s1) -> Valp M s0 q <-> Valp M s1 q).
+  - induction q.
+    + simpl.
+      intros.
+      rewrite <- H0.
+      reflexivity.
+    + simpl.
+      intros.
+      reflexivity.
+    + simpl.
+      intros.
+      rewrite <- H0.
+      reflexivity.
+    + simpl.
+      intros.
+      rewrite <- H0.
+      reflexivity.
+    + simpl.
+      intros.
+      rewrite <- (IHq1 s2 s3).
+      rewrite <- (IHq2 s2 s3).
+      reflexivity.
+      auto. auto.
+    + simpl.
+      intros.
+      rewrite <- (IHq s2 s3).
+      reflexivity.
+      auto.
+    + simpl.
+      intros.
+      assert (forall t, Valp M (t;s2) q <-> Valp M (t;s3) q).
+      intros. apply IHq.
+      {unfold function_equiv. destruct n. simpl. reflexivity. simpl. auto. }
+      split.
+      intros.
+      rewrite <- H1.
+      auto.
+      intros.
+      rewrite -> H1.
+      auto.
+  - intros.
+    rewrite <- H1.
+    auto.
+Qed.
+
 Section Semantics.
 
   Variable L : Lang.
-
-  Instance Valt_s_rew : forall M, Proper (function_equiv ==> eq ==> equiv) (Valt M).
-  Proof.
-    unfold Proper, respectful.
-    intros M s0 s1 H.
-    assert(forall t, Valt M s0 t == Valt M s1 t).
-    - induction t.
-      + simpl. auto.
-      + simpl. reflexivity.
-      + simpl. reflexivity.
-      + simpl.
-        rewrite <- IHt.
-        reflexivity.
-      + simpl.
-        rewrite <- IHt1.
-        rewrite <- IHt2.
-        reflexivity.
-    - intros.
-      rewrite <- H1.
-      auto. 
-  Qed.
-
-  Instance Valp_s_rew : forall M, Proper (function_equiv ==> eq ==> iff) (Valp M).
-  Proof.
-    unfold Proper, respectful.
-    intros M s0 s1 H.
-    assert (forall q s0 s1, (s0 ~ s1) -> Valp M s0 q <-> Valp M s1 q).
-    - induction q.
-      + simpl.
-        intros.
-        rewrite <- H0.
-        reflexivity.
-      + simpl.
-        intros.
-        reflexivity.
-      + simpl.
-        intros.
-        rewrite <- H0.
-        reflexivity.
-      + simpl.
-        intros.
-        rewrite <- H0.
-        reflexivity.
-      + simpl.
-        intros.
-        rewrite <- (IHq1 s2 s3).
-        rewrite <- (IHq2 s2 s3).
-        reflexivity.
-        auto. auto.
-      + simpl.
-        intros.
-        rewrite <- (IHq s2 s3).
-        reflexivity.
-        auto.
-      + simpl.
-        intros.
-        assert (forall t, Valp M (t;s2) q <-> Valp M (t;s3) q).
-        intros. apply IHq.
-        {unfold function_equiv. destruct n. simpl. reflexivity. simpl. auto. }
-        split.
-        intros.
-        rewrite <- H1.
-        auto.
-        intros.
-        rewrite -> H1.
-        auto.
-    - intros.
-      rewrite <- H1.
-      auto.
-  Qed.
-
+  
   Lemma M_and_destruct : forall M p q, (M |= p [/\] q) <-> (M |= p) /\ (M |= q).
   Proof.
     unfold models.

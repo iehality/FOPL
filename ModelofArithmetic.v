@@ -1,7 +1,6 @@
 Require Import FOPL.Semantics.
 Require Import FOPL.Arithmetic.
 
-Check Model.
 Instance N : Model L := {
   Dom := nat;
   SDom := DSetoid nat;
@@ -73,13 +72,13 @@ Proof.
   apply lp_iff1 in H1.
   assert((0;s) ~ fun n => Valt N s (([0]; \0) n)). 
   { unfold function_equiv. destruct n. simpl. auto. simpl. auto. }
-  rewrite -> (Valp_s_rew _ H3).
+  setoid_rewrite -> H3.
   auto.
   specialize (H2 t).
   apply H2 in IHt.
   apply lp_iff1 in IHt.
   assert((S t;s) ~ fun n => Valt N (t; s) (([S] '0 .; \0) n)).
   { unfold function_equiv. destruct n. simpl. auto. simpl. auto. }
-  rewrite -> (Valp_s_rew _ H3).
+  rewrite -> H3.
   auto.
 Qed.
