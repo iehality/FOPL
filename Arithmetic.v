@@ -168,32 +168,6 @@ Proof.
     AX. apply PLUS.
 Qed.
 
-Lemma sgfg : forall t u, t = rewc (u; \0) (sfc t).
-Proof.
-  unfold sfc.
-  intros.
-  rewrite <- nested_rewc.
-  simpl.
-  apply rewc_id.
-Qed.
-
-Lemma inj : forall T s0 s1 t, (forall n, T |- (s0 n)[=](s1 n)) -> (T |- (rewc s0 t)[=](rewc s1 t)).
-Proof.
-  induction t.
-  - simpl. intros. auto.
-  - simpl. intros. AX.
-  - simpl. intros. AX.
-  - simpl.
-    intros.
-    MP (Fc1 f (rewc s0 t) [=] Fc1 f (rewc s0 t)).
-    AX.
-    assert(forall u, (Fc1 f (sfc (rewc s0 t)) [=] Fc1 f '0).(u) = (Fc1 f (rewc s0 t) [=] Fc1 f u)).
-    intros. simpl.
-
-
-  intros.
-
-
 Lemma mult_compl : forall n m, Q |- [n][*][m][=][n * m].
 Proof.
   intros.
