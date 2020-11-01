@@ -24,24 +24,24 @@ Inductive provable {L : Lang} (T : Th) : LP -> Prop :=
   | Eq0  : forall t, provable T (t [=] t)
   | Eq1  : forall p t u, provable T (t [=] u [->] p.(t) [->] p.(u)).
 
-  Ltac MP h := apply (@MP _ _ h _).
-  Ltac GEN := apply GEN.
-  
-  Notation "T |- p" := (provable T p) (at level 95).
-  
-  Definition Consis {L : Lang} (T : Th) := ~ exists p, (T |- p) /\ (T |- [~] p).
-  
-  Definition addT {L : Lang} (T : Th) p := fun x => T x \/ x = p.
-  Definition elmT {L : Lang} (T : Th) p := fun x => T x /\ x <> p.
-  Definition incT {L : Lang} (T U : Th) := forall p, T p -> U p.
-  Definition eqvT {L : Lang} (T U : Th) := (incT T U) /\ (incT U T).
-  Notation "T :+ p" := (addT T p) (at level 71, left associativity).
-  Notation "T :- p" := (elmT T p) (at level 71, left associativity). 
-  Notation "T :< U" := (incT T U) (at level 72, left associativity).
-  Notation "T :[=] U" := (eqvT T U) (at level 72, left associativity).
+Ltac MP h := apply (@MP _ _ h _).
+Ltac GEN := apply GEN.
+
+Notation "T |- p" := (provable T p) (at level 95).
+
+Definition Consis {L : Lang} (T : Th) := ~ exists p, (T |- p) /\ (T |- [~] p).
+
+Definition addT {L : Lang} (T : Th) p := fun x => T x \/ x = p.
+Definition elmT {L : Lang} (T : Th) p := fun x => T x /\ x <> p.
+Definition incT {L : Lang} (T U : Th) := forall p, T p -> U p.
+Definition eqvT {L : Lang} (T U : Th) := (incT T U) /\ (incT U T).
+Notation "T :+ p" := (addT T p) (at level 71, left associativity).
+Notation "T :- p" := (elmT T p) (at level 71, left associativity). 
+Notation "T :< U" := (incT T U) (at level 72, left associativity).
+Notation "T :[=] U" := (eqvT T U) (at level 72, left associativity).
 
   Definition TRUE {L : Lang} := [O][=][O].  
-  
+
 Section deduction_facts.
 
   Variable L : Lang.
@@ -643,70 +643,3 @@ Ltac SPECIALIZE h u := apply fal_R with (t := u) in h.
 Ltac EXISTS u := apply ext_R with (t := u).
 Ltac SYMMETRY := apply eql_refl.
 Ltac WL := apply weakening.
-
-Section Sentence_theory.
-  Variable L :Lang.
-
-  Definition SentTh (T : Th) := forall p, T p -> Ar p = 0.
-
-  Lemma SentTheqvT : forall T, SentTh T -> T :[=] sfT T.
-  Proof.
-    unfold eqvT. unfold incT. unfold sfT. unfold SentTh.
-    intros.
-    split.
-    intros.
-    exists p.
-    split.
-    unfold sf.
-    apply sentence_rew.
-    auto. auto.
-    unfold sf.
-    intros.
-    destruct H0 as [q].
-    destruct H0.
-    rewrite <- sentence_rew in H0.
-    rewrite H0. auto.
-    auto.
-  Qed.
-
-  Lemma sfT_T : forall T p, SentTh T -> (sfT T |- p) -> (T |- p).
-  Proof.
-    intros.
-    apply TInclusion with (T := sfT T).
-    apply SentTheqvT. auto.
-    auto.
-  Qed.
-  
-  Lemma T_sfT : forall T p, SentTh T -> (T |- p) -> (sfT T |- p).
-  Proof.
-    intros.
-    apply TInclusion with (T := T).
-    apply SentTheqvT. auto.
-    auto.
-  Qed.
-
-  Lemma sentsfT: forall T, SentTh T -> SentTh (sfT T).
-  Proof.
-    unfold SentTh. unfold sfT.
-    intros.
-    destruct H0 as [q].
-    destruct H0.
-    rewrite -> H0.
-    assert (q = sf q).
-    apply sentence_rew.
-    auto.
-    rewrite <- H2.
-    auto.
-  Qed.
-
-  Lemma prsfT : forall (T : Th) p, Ar p = 0 -> T p -> (sfT T) p.
-  Proof.
-    intros.
-    unfold sfT, sf.
-    exists p.
-    split.
-    apply sentence_rew. auto.
-    auto.
-  Qed.
-  
-End Sentence_theory.
