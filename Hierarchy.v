@@ -12,7 +12,7 @@ Fixpoint delta0 (p0 : LP) : bool :=
   | [~]p   => delta0 p
   | p[->]q => (delta0 p) && (delta0 q)
   | x[=]y  => true
-  | Pd2 _ _ _ _ => true
+  | Pd2 _ _ _ => true
   | _ => false
   end.
 
@@ -80,7 +80,10 @@ Proof.
       AX.
     + INTRO.
       GEN.
+      rewrite <- le_replace.
       apply sf_dsb.
+      simpl.
       INTRO.
+
       MP ('0[=][O]).
 Abort.

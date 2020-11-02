@@ -1,8 +1,6 @@
 Require Export Arith.
 Require Export Lia.
-Require Export FOPL.FOPL.
-Require Export FOPL.Deduction.
-Require Export FOPL.SetoidL.
+Require Export FOPL.Basic.
 
 Set Implicit Arguments.
 
@@ -53,7 +51,7 @@ Inductive PA : Th :=
   | PA_Q  : forall p, Q p -> PA p
   | IND   : forall p, PA (p.([0]) [->] ([fal] p [->] p..([S] '0)) [->] [fal] p).
 
-Lemma PLUS0 : forall c d, Q |- ([S]c)[+]d[=][S](c[+]d).
+Lemma PLUS0 : forall c d, Q ||- ([S]c)[+]d[=][S](c[+]d).
 Proof.
   intros.
   assert ((([S]'0)[+]'1[=][S]('0[+]'1)).(c, d) = (([S]c)[+]d[=][S](c[+]d))).
@@ -63,7 +61,7 @@ Proof.
   AX. apply PLUS.
 Qed.
   
-Lemma MULT0 : forall c d, Q |- ([S]c)[*]d[=]c[*]d[+]d.
+Lemma MULT0 : forall c d, Q ||- ([S]c)[*]d[=]c[*]d[+]d.
 Proof.
   intros.
   assert ((([S]'0)[*]'1[=]('0[*]'1)[+]'1).(c, d) = (([S]c)[*]d[=]c[*]d[+]d)).
@@ -74,11 +72,11 @@ Proof.
 Qed.
 
 Lemma le_replace : forall T c d, 
-  (T |- [fal][fal]'0[<=]'1[<->][ext]'1[+]'0[=]'2) -> 
+  (T ||- [fal][fal]'0[<=]'1[<->][ext]'1[+]'0[=]'2) -> 
   ([ext](sfc c)[+]'0[=](sfc d)) ==(T) (c[<=]d).
 Proof.
   intros.
-  assert(T |- c[<=]d[<->][ext](sfc c)[+]'0[=](sfc d)).
+  assert(T ||- c[<=]d[<->][ext](sfc c)[+]'0[=](sfc d)).
   - assert((('0[<=]'1)[<->]([ext]'1[+]'0[=]'2)).(c,d) = (c[<=]d[<->][ext](sfc c)[+]'0[=](sfc d))).
     simpl.
     reflexivity.
@@ -88,45 +86,45 @@ Proof.
   - symmetry. auto.
 Qed.
 
-Lemma pred_replace : forall c, ([0][=/=]c) ==(Q) ([ext](sfc c)[=][S]'0).
+Lemma pred_replace : forall T c,
+  (T ||- [fal][0][=/=][S]'0) ->
+  (T ||- [fal][0][=/=]'0[->][ext]'1[=][S]'0) ->
+  (([ext](sfc c)[=][S]'0) ==(T) ([0][=/=]c)).
 Proof.
   intros.
-  assert(Q |- [0][=/=]c[<->][ext](sfc c)[=][S]'0).
+  assert(T ||- [0][=/=]c[<->][ext](sfc c)[=][S]'0).
   - SPLIT.
     assert(([0][=/=]'0[->][ext]'1[=][S]'0).(c) = ([0][=/=]c[->][ext](sfc c)[=][S]'0)).
     simpl. reflexivity.
-    rewrite <- H.
+    rewrite <- H1.
     apply fal_R.
-    AX. apply PRED.
+    auto.
+    MPI ([fal][0][=/=][S]'0). auto.
     apply ext_L.
-    assert([0][=/=](sfc c) = sf([0][=/=]c)).
+    apply sf_dsb. unfold sf at 1. simpl.
+    assert([0][=/=](sfc c) = sf([O][=/=]c)).
     unfold sf, sfc. simpl. reflexivity.
-    rewrite <- H.
+    rewrite <- H1.
     apply contrad_elim.
     TRANS ([0][=](sfc c)).
     INTRO.
     apply pNNPP. AX.
     INTRO.
-    MP ([0][=/=][S]'0).
-    WL.
-    assert(([0][=/=][S]'0).('0) = [0][=/=][S]'0).
-    simpl. reflexivity.
-    rewrite <- H0.
-    apply fal_R.
+    MP (([0][=/=][S]'0).('0)).
+    apply fal_R. AX.
+    simpl.
+    apply contrad_add.
+    INTRO.
+    Tpp.
+    Tpqp.
+    REWRITE H3.
+    REWRITE_rl H2.
     AX.
-    apply prsfT.
-    simpl. auto.
-    apply NEQ0S.
-    assert(forall t, ('0[=/=][S]'1).(t) = t[=/=][S]'0).
-    intros.
-    simpl. reflexivity.
-    repeat rewrite <- H0.
-    apply deduction_inv.
-    AX.
-  - auto.
+  - symmetry.
+    auto. 
 Qed.
 
-Lemma plus_compl : forall n m, Q |- [n][+][m][=][n + m].
+Lemma plus_compl : forall n m, Q ||- [n][+][m][=][n + m].
 Proof.
   intros.
   induction n.
@@ -140,11 +138,11 @@ Proof.
   + simpl.
     apply eql_trans with (u:=([S][n][+][m])).
     apply PLUS0.
-    REWRITEl IHn.
+    REWRITE IHn.
     AX.
 Qed.
 
-Lemma mult_compl : forall n m, Q |- [n][*][m][=][n * m].
+Lemma mult_compl : forall n m, Q ||- [n][*][m][=][n * m].
 Proof.
   intros.
   induction n.
@@ -158,13 +156,13 @@ Proof.
     apply eql_trans with (u:=([n][*][m][+][m])).
     apply MULT0.
     apply eql_trans with (u:=([n*m][+][m])).
-    REWRITEl IHn. AX.
+    REWRITE IHn. AX.
     assert(m + n*m = n*m + m). lia.
     rewrite -> H.
     apply plus_compl.
 Qed.
 
-Lemma le_compl : forall n m, n <= m -> (Q |- [n][<=][m]).
+Lemma le_compl : forall n m, n <= m -> (Q ||- [n][<=][m]).
 Proof.
   intros.
   rewrite <- le_replace.

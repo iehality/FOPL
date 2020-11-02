@@ -320,7 +320,7 @@ Section Semantics.
     auto.
   Qed.
   
-  Theorem Soundness : forall T p, (T |- p) -> (T ||= p).
+  Theorem Soundness : forall T p, (T ||- p) -> (T ||= p).
   Proof.
     unfold SValid.
     intros.

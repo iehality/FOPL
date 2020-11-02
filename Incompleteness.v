@@ -42,7 +42,7 @@ Section Incompleteness.
   Variable T : Th.
   Variable Γ : LP.
   Hypothesis artG : Ar Γ = 3.
-  Hypothesis Gdefg : forall p n, T |- [fal]Γ.([⌜p⌝], n, '0)[<->]'0[=][⌜p.(n)⌝].
+  Hypothesis Gdefg : forall p n, T ||- [fal]Γ.([⌜p⌝], n, '0)[<->]'0[=][⌜p.(n)⌝].
 
   Section FixPoint.
   
@@ -50,7 +50,7 @@ Section Incompleteness.
     Hypothesis opf : Ar θ = 1.
     Definition σ : LP := [fal](Γ.('1, '1, '0)[->]θ.('0)).
     
-    Lemma sigiff : forall p, T |- σ.([⌜p⌝])[<->]θ.([⌜p.([⌜p⌝])⌝]).
+    Lemma sigiff : forall p, T ||- σ.([⌜p⌝])[<->]θ.([⌜p.([⌜p⌝])⌝]).
     Proof.
       intros.
       assert (θrew : forall s, θ = θ .[('0);s]).
@@ -123,7 +123,7 @@ Section Incompleteness.
           MP ([⌜p.([⌜p⌝])⌝] [=] [⌜p.([⌜p⌝])⌝] [->] θ.([⌜p.([⌜p⌝])⌝])).
           TRANS (Γ.([⌜p⌝], [⌜p⌝], [⌜p.([⌜p⌝])⌝])).
           
-          assert (T |- Γ.([⌜p⌝], [⌜p⌝], [⌜p.([⌜p⌝])⌝]) [<->] [⌜p.([⌜p⌝])⌝] [=] [⌜p.([⌜p⌝])⌝]).
+          assert (T ||- Γ.([⌜p⌝], [⌜p⌝], [⌜p.([⌜p⌝])⌝]) [<->] [⌜p.([⌜p⌝])⌝] [=] [⌜p.([⌜p⌝])⌝]).
           specialize (Gdefg p ([⌜p⌝])).
           SPECIALIZE Gdefg ([⌜p.([⌜p⌝])⌝]).
           simpl in Gdefg.
@@ -172,14 +172,14 @@ Section Incompleteness.
 
     Definition fixpoint := σ.([⌜σ⌝]).
 
-    Lemma Diagonal : T |- fixpoint [<->] θ.([⌜fixpoint⌝]).
+    Lemma Diagonal : T ||- fixpoint [<->] θ.([⌜fixpoint⌝]).
     Proof. 
       apply sigiff.
     Qed.
 
   End FixPoint.
   
-  Theorem Undefinability : (exists Tr, Ar Tr = 1 /\ forall p, T |- p [<->] Tr.([⌜p⌝])) -> ~ Consis T.
+  Theorem Undefinability : (exists Tr, Ar Tr = 1 /\ forall p, T ||- p [<->] Tr.([⌜p⌝])) -> ~ Consis T.
   Proof.
     intros. intro conT.
     destruct H as [Tr].
@@ -219,12 +219,12 @@ Section Incompleteness.
   Section Goedel_Incompleteness1.
     
     Variable prov : nat -> nat -> Prop.
-    Hypothesis proofH : forall p, (T |- p) <-> (exists n, prov n ⌜p⌝).  
+    Hypothesis proofH : forall p, (T ||- p) <-> (exists n, prov n ⌜p⌝).  
   
     Variable Prov : LP.
     Hypothesis arProv : Ar Prov = 2.
-    Hypothesis ProvH : forall n m, prov n m <-> (T |- Prov.([n], [m])). 
-    Hypothesis nProvH : forall n m, ~ prov n m <-> (T |- [~] Prov.([n], [m])).
+    Hypothesis ProvH : forall n m, prov n m <-> (T ||- Prov.([n], [m])). 
+    Hypothesis nProvH : forall n m, ~ prov n m <-> (T ||- [~] Prov.([n], [m])).
   
     Let PrG : LP := ext Prov.
   
@@ -266,9 +266,9 @@ Section Incompleteness.
       lia.
     Qed.
 
-    Let Omega_ConT := forall p, (forall n, T |- [~] p.([n])) -> ~ (T |- ext p).
+    Let Omega_ConT := forall p, (forall n, T ||- [~] p.([n])) -> ~ (T ||- ext p).
 
-    Lemma Prov_ext : Omega_ConT -> forall p, (T |- PrG.([⌜p⌝])) -> exists n, (T |- Prov.([n], [⌜p⌝])).
+    Lemma Prov_ext : Omega_ConT -> forall p, (T ||- PrG.([⌜p⌝])) -> exists n, (T ||- Prov.([n], [⌜p⌝])).
     Proof.
       intros.
       rewrite -> Pr_sbs in H0.
@@ -285,7 +285,7 @@ Section Incompleteness.
       auto.
     Qed.
   
-    Lemma E1 : forall p, Omega_ConT -> (T |- p) <-> (T |- PrG.([⌜p⌝])).
+    Lemma E1 : forall p, Omega_ConT -> (T ||- p) <-> (T ||- PrG.([⌜p⌝])).
     Proof.
       intros.
       split.
@@ -298,7 +298,7 @@ Section Incompleteness.
         rewrite <-ProvH.
         auto.
       - intros.
-        assert (exists n, (T |- Prov.([n], [⌜p⌝]))).
+        assert (exists n, (T ||- Prov.([n], [⌜p⌝]))).
         + apply Prov_ext.
           auto. auto.
         + destruct H1 as [n].
@@ -314,7 +314,7 @@ Section Incompleteness.
       apply NNPP.
       intro.
       specialize (H ([~] [O] [=] [O])).
-      assert (~ (T |- ext ([~] [O] [=] [O]))).
+      assert (~ (T ||- ext ([~] [O] [=] [O]))).
       apply H.
       intros.
       simpl.
@@ -327,7 +327,7 @@ Section Incompleteness.
     Definition ConGT : LP := [~] PrG.([⌜[~][O][=][O]⌝]).
     Definition G : LP := fixpoint ([~] PrG).
   
-    Lemma Gfixpoint : T |- G[<->][~]PrG.([⌜G⌝]).
+    Lemma Gfixpoint : T ||- G[<->][~]PrG.([⌜G⌝]).
     Proof.
       assert (Ar ([~] PrG) = 1).
       simpl.
@@ -340,7 +340,7 @@ Section Incompleteness.
       auto.
     Qed.
   
-    Theorem Incompleteness1 : Omega_ConT -> ~ (T |- G) /\ ~ (T |- [~] G).
+    Theorem Incompleteness1 : Omega_ConT -> ~ (T ||- G) /\ ~ (T ||- [~] G).
     Proof.
       intros.
       assert (gf := Gfixpoint).
@@ -373,13 +373,13 @@ Section Incompleteness.
   Section Rosser_Incompleteness1.
     
     Variable prov : nat -> LP -> Prop.
-    Hypothesis proofH : forall p, (T |- p) <-> (exists n, prov n p).
+    Hypothesis proofH : forall p, (T ||- p) <-> (exists n, prov n p).
     Let provR n p := (prov n p) /\ (~ exists m, m <= n /\ prov m ([~] p)).  
     
     Variable ProvR : LP.
     Hypothesis arProv : Ar ProvR = 2.
-    Hypothesis ProvRH : forall n p, provR n p <-> (T |- ProvR.([n], [⌜p⌝])).
-    Hypothesis nProvRH : forall n p, ~ provR n p <-> (T |- [~] ProvR.([n], [⌜p⌝])).
+    Hypothesis ProvRH : forall n p, provR n p <-> (T ||- ProvR.([n], [⌜p⌝])).
+    Hypothesis nProvRH : forall n p, ~ provR n p <-> (T ||- [~] ProvR.([n], [⌜p⌝])).
   
     Let PrR : LP := ext ProvR.
 
@@ -423,7 +423,7 @@ Section Incompleteness.
 
     Let ConRT : LP := [~] PrR.([⌜[~][O][=][O]⌝]).
 
-    Lemma E1R : Consis T -> forall p, (T |- p) <-> (T |- PrR.([⌜p⌝])).
+    Lemma E1R : Consis T -> forall p, (T ||- p) <-> (T ||- PrR.([⌜p⌝])).
     Proof.
       intros.
       split.
@@ -458,14 +458,14 @@ Section Incompleteness.
     Variable Pr : LP.
     Hypothesis arPr : Ar Pr = 1.
     
-    Hypothesis D1 : forall p, T |- p -> T |- Pr.([⌜p⌝]).
-    Hypothesis D2 : forall p q, T |- Pr.([⌜p[->]q⌝]) [->] Pr.([⌜p⌝]) [->] Pr.([⌜q⌝]).
-    Hypothesis D3 : forall p, T |- Pr.([⌜p⌝]) [->] Pr.([⌜Pr.([⌜p⌝])⌝]).
+    Hypothesis D1 : forall p, T ||- p -> T ||- Pr.([⌜p⌝]).
+    Hypothesis D2 : forall p q, T ||- Pr.([⌜p[->]q⌝]) [->] Pr.([⌜p⌝]) [->] Pr.([⌜q⌝]).
+    Hypothesis D3 : forall p, T ||- Pr.([⌜p⌝]) [->] Pr.([⌜Pr.([⌜p⌝])⌝]).
     
     Definition γ : LP := fixpoint ([~] Pr).
     Definition ConT : LP := [~] Pr.([⌜[~][O][=][O]⌝]).
     
-    Lemma nPrfix : T |- γ[<->][~]Pr.([⌜γ⌝]).
+    Lemma nPrfix : T ||- γ[<->][~]Pr.([⌜γ⌝]).
     Proof.
       assert (Ar ([~] Pr) = 1).
       simpl.
@@ -476,7 +476,7 @@ Section Incompleteness.
       auto.
     Qed.
     
-    Lemma Consis_g : T |- ConT [->] γ.
+    Lemma Consis_g : T ||- ConT [->] γ.
     Proof.
       assert (D := nPrfix). 
       DESTRUCT D.
@@ -484,7 +484,7 @@ Section Incompleteness.
       apply contrad_elim.
       INTRO.
       apply pNN.
-      assert (forall p, T :+ ([~] γ) |- Pr.([⌜p⌝])).
+      assert (forall p, T :+ ([~] γ) ||- Pr.([⌜p⌝])).
       - intros.
         MP (Pr.([⌜[~]Pr.([⌜γ⌝])⌝])).
         + MP (Pr.([⌜γ⌝])).
@@ -519,12 +519,12 @@ Section Incompleteness.
       - auto.
     Qed.
     
-    Theorem Incompleteness : T |- ConT -> ~ Consis T.
+    Theorem Incompleteness : T ||- ConT -> ~ Consis T.
     Proof.
       assert (D := nPrfix).
       DESTRUCT D.
       intros.
-      assert (T |- γ).
+      assert (T ||- γ).
       MP ConT. auto.
       apply Consis_g.    
       intro. 
@@ -537,7 +537,7 @@ Section Incompleteness.
       auto.
     Qed.
   
-    Lemma pr_distr : forall p q r, (T :+ r |- Pr.([⌜p[->]q⌝])) -> (T :+ r |- Pr.([⌜p⌝]) [->] Pr.([⌜q⌝])).
+    Lemma pr_distr : forall p q r, (T :+ r ||- Pr.([⌜p[->]q⌝])) -> (T :+ r ||- Pr.([⌜p⌝]) [->] Pr.([⌜q⌝])).
     Proof.
       intros.
       MP (Pr.([⌜p[->]q⌝])). auto.
@@ -545,7 +545,7 @@ Section Incompleteness.
       apply D2.
     Qed. 
   
-    Theorem Loeb : forall p, Ar p = 0 -> (T |- Pr.([⌜p⌝])[->]p) -> (T |- p).
+    Theorem Loeb : forall p, Ar p = 0 -> (T ||- Pr.([⌜p⌝])[->]p) -> (T ||- p).
     Proof.
       intros.
       assert (Ar (Pr.('0) [->] p) = 1).
@@ -573,7 +573,7 @@ Section Incompleteness.
       rewrite <- H2 in D.
   
       DESTRUCT D.
-      assert (T |- Pr.([⌜q⌝]) [->] p).
+      assert (T ||- Pr.([⌜q⌝]) [->] p).
       - INTRO.
         MP (Pr.([⌜p⌝])).
         MP (Pr.([⌜Pr.([⌜q⌝])⌝])).

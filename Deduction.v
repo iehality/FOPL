@@ -8,8 +8,10 @@ Set Implicit Arguments.
 Definition Th {L : Lang} := @LP L -> Prop.
   
   (** * Hilbert Style Deduction System *)
+
+Definition alt {L : Lang} (p : LP) : LP := p.[fun x => '(pred x)].
   
-Definition sfT {L : Lang} (T : Th) := fun p => exists q, p = sf q /\ T q.
+Definition sfT {L : Lang} (T : Th) := fun p => sf (alt p) = p /\ T (alt p).
   
 Inductive provable {L : Lang} (T : Th) : LP -> Prop :=
   | GEN  : forall q, provable (sfT T) q -> provable T (fal q)
@@ -27,9 +29,9 @@ Inductive provable {L : Lang} (T : Th) : LP -> Prop :=
 Ltac MP h := apply (@MP _ _ h _).
 Ltac GEN := apply GEN.
 
-Notation "T |- p" := (provable T p) (at level 95).
+Notation "T ||- p" := (provable T p) (at level 95).
 
-Definition Consis {L : Lang} (T : Th) := ~ exists p, (T |- p) /\ (T |- [~] p).
+Definition Consis {L : Lang} (T : Th) := ~ exists p, (T ||- p) /\ (T ||- [~] p).
 
 Definition addT {L : Lang} (T : Th) p := fun x => T x \/ x = p.
 Definition elmT {L : Lang} (T : Th) p := fun x => T x /\ x <> p.
@@ -37,8 +39,8 @@ Definition incT {L : Lang} (T U : Th) := forall p, T p -> U p.
 Definition eqvT {L : Lang} (T U : Th) := (incT T U) /\ (incT U T).
 Notation "T :+ p" := (addT T p) (at level 71, left associativity).
 Notation "T :- p" := (elmT T p) (at level 71, left associativity). 
-Notation "T :< U" := (incT T U) (at level 72, left associativity).
-Notation "T :[=] U" := (eqvT T U) (at level 72, left associativity).
+Notation "T ⊆ U" := (incT T U) (at level 72, left associativity).
+Notation "T :=: U" := (eqvT T U) (at level 72, left associativity).
 
   Definition TRUE {L : Lang} := [O][=][O].  
 
@@ -46,7 +48,7 @@ Section deduction_facts.
 
   Variable L : Lang.
 
-  Lemma p__p : forall T p, T |- p [->] p.
+  Lemma p__p : forall T p, T ||- p [->] p.
   Proof.
     intros.
     MP (p [->] (p [->] p)).
@@ -60,7 +62,7 @@ Section deduction_facts.
   
   (** ** Proof facts *)  
   
-  Lemma imp_pr : forall T p q, (T |- p) -> (T |- q [->] p).
+  Lemma imp_pr : forall T p q, (T ||- p) -> (T ||- q [->] p).
   Proof.
     intros.
     MP p.
@@ -68,7 +70,7 @@ Section deduction_facts.
     AX.
   Qed.
   
-  Lemma imp_trans : forall T p q r, (T |- p [->] q) -> (T |- q [->] r) -> (T |- p [->] r).
+  Lemma imp_trans : forall T p q r, (T ||- p [->] q) -> (T ||- q [->] r) -> (T ||- p [->] r).
   Proof.
     intros.
     MP (p [->] q). auto.
@@ -79,9 +81,9 @@ Section deduction_facts.
   
   Ltac TRANS h := apply imp_trans with (q:=h).
   
-  Lemma TInclusion : forall (T U : Th) p, T :< U -> T |- p -> U |- p.
+  Lemma TInclusion : forall (T U : Th) p, T ⊆ U -> T ||- p -> U ||- p.
   Proof.
-    assert (forall (T : Th) p, T |- p -> forall (U : Th), T :< U -> U |- p).
+    assert (forall (T : Th) p, T ||- p -> forall (U : Th), T ⊆ U -> U ||- p).
     - intros T p H.
       unfold incT.
       induction H.
@@ -90,9 +92,7 @@ Section deduction_facts.
         apply IHprovable.
         unfold sfT.
         intros.
-        destruct H1 as [p0].
         destruct H1.
-        exists p0.
         auto.
       + intros.
         MP p.
@@ -112,7 +112,7 @@ Section deduction_facts.
       auto.
   Qed.
   
-  Lemma weakening : forall T p q, (T |- q) -> (T :+ p |- q).
+  Lemma weakening : forall T p q, (T ||- q) -> (T :+ p ||- q).
   Proof.
     intros.
     apply TInclusion with (T := T).
@@ -120,9 +120,9 @@ Section deduction_facts.
     auto.
   Qed.
   
-  Theorem Deduction : forall T p q, (T :+ p |- q) -> (T |- p [->] q).
+  Theorem Deduction : forall T p q, (T :+ p ||- q) -> (T ||- p [->] q).
   Proof.
-    assert (forall T q, (T |- q) -> (forall p, T :- p |- p [->] q)).
+    assert (forall T q, (T ||- q) -> (forall p, T :- p ||- p [->] q)).
     - intros T q H.
       induction H.
       + intros.
@@ -135,14 +135,12 @@ Section deduction_facts.
         unfold sfT. unfold elmT. unfold incT.
         intros.
         destruct H0.
-        destruct H0 as [p1].
         destruct H0.
-        exists p1.
         split. auto.
         split. auto.
         contradict H1.
         rewrite <- H1.
-        auto.
+        symmetry. auto.
         auto.
         AX.
       + intros.
@@ -208,25 +206,31 @@ Section deduction_facts.
   Qed.
   
   Ltac INTRO := apply Deduction.
+
+  Lemma alt_sf : forall p, alt (sf p) = p.
+  Proof.
+    intros.
+    unfold alt, sf.
+    rewrite <- nested_rew.
+    simpl.
+    rewrite rew_id.
+    auto.
+  Qed. 
   
-  Lemma sf_dsb0 : forall T p, (sfT T :+ sf p) :< (sfT (T :+ p)).
+  Lemma sf_dsb0 : forall T p, (sfT T :+ sf p) ⊆ (sfT (T :+ p)).
   Proof.
     intros.
     unfold sfT. unfold addT. unfold incT.
     intros.
     destruct H.
-    destruct H as [p1].
     destruct H.
-    exists p1.
-    split. auto.
     auto.
-    exists p.
-    split.
-    auto.
+    rewrite H.
+    rewrite alt_sf.
     auto.
   Qed.
   
-  Lemma sf_dsb1 : forall T U p, T :< U -> (T :+ p) :< (U :+ p).
+  Lemma sf_dsb1 : forall T U p, T ⊆ U -> (T :+ p) ⊆ (U :+ p).
   Proof.
     unfold sfT. unfold addT. unfold incT.
     intros.
@@ -235,7 +239,7 @@ Section deduction_facts.
     auto.
   Qed.
   
-  Lemma sf_dsb : forall T p q, (sfT T :+ sf p |- q) -> (sfT (T :+ p) |- q).
+  Lemma sf_dsb : forall T p q, (sfT T :+ sf p ||- q) -> (sfT (T :+ p) ||- q).
   Proof.
     intros.
     apply TInclusion with (T := sfT T :+ sf p).
@@ -243,7 +247,7 @@ Section deduction_facts.
     auto.
   Qed.
 
-  Lemma MPintro : forall T p q, (T |- p) -> (T :+ p |- q) -> (T |- q).
+  Lemma MPintro : forall T p q, (T ||- p) -> (T :+ p ||- q) -> (T ||- q).
   Proof.
     intros.
     MP p. auto.
@@ -252,7 +256,7 @@ Section deduction_facts.
 
   Ltac MPI h := apply MPintro with (p:=h).
   
-  Lemma imp_pqrs : forall T p q r s, (T |- p [->] q [->] r) -> (T |- r [->] s) -> (T |- p [->] q [->] s).
+  Lemma imp_pqrs : forall T p q r s, (T ||- p [->] q [->] r) -> (T ||- r [->] s) -> (T ||- p [->] q [->] s).
   Proof.
     intros.
     MP (p [->] q [->] r). auto.
@@ -264,7 +268,7 @@ Section deduction_facts.
     AX.
   Qed.
   
-  Lemma explosion : forall T, (~ Consis T) -> forall p, T |- p.
+  Lemma explosion : forall T, (~ Consis T) -> forall p, T ||- p.
   Proof.
     intros.
     unfold Consis in H. apply NNPP in H.
@@ -278,7 +282,7 @@ Section deduction_facts.
     AX.
   Qed.
   
-  Lemma p_np_q : forall T p q, T |- p [->] [~] p [->] q.
+  Lemma p_np_q : forall T p q, T ||- p [->] [~] p [->] q.
   Proof.
     intros.
     INTRO.
@@ -293,7 +297,7 @@ Section deduction_facts.
     AX.
   Qed.
     
-  Lemma deduction_inv : forall T p q, (T |- p [->] q) -> (T :+ p |- q).
+  Lemma deduction_inv : forall T p q, (T ||- p [->] q) -> (T :+ p ||- q).
   Proof.
     intros.
     MP p. AX.
@@ -301,7 +305,7 @@ Section deduction_facts.
     auto.
   Qed.
   
-  Lemma pr_NNPP : forall T p, T |- [~] [~] p [->] p.
+  Lemma pr_NNPP : forall T p, T ||- [~] [~] p [->] p.
   Proof.
     intros.
     INTRO.
@@ -316,7 +320,7 @@ Section deduction_facts.
     AX.
   Qed.
   
-  Lemma pr_NN : forall T p, T |- p [->] [~] [~] p.
+  Lemma pr_NN : forall T p, T ||- p [->] [~] [~] p.
   Proof.
     intros.
     MP ([~] [~] [~] p [->] [~] p).
@@ -324,7 +328,7 @@ Section deduction_facts.
     AX.
   Qed.
   
-  Lemma pNNPP : forall T p, (T |- [~] [~] p) -> (T |- p).
+  Lemma pNNPP : forall T p, (T ||- [~] [~] p) -> (T ||- p).
   Proof.
     intros.
     MP ([~] [~] p).
@@ -338,7 +342,7 @@ Section deduction_facts.
     AX.
   Qed.
   
-  Lemma pNN : forall T p, (T |- p) -> (T |- [~] [~] p).
+  Lemma pNN : forall T p, (T ||- p) -> (T ||- [~] [~] p).
   Proof.
     intros.
     MP p. auto.
@@ -347,7 +351,7 @@ Section deduction_facts.
     AX.
   Qed.
   
-  Lemma neg_intro : forall T p, T |- (p [->] [~] p) -> (T |- [~] p).
+  Lemma neg_intro : forall T p, T ||- (p [->] [~] p) -> (T ||- [~] p).
   Proof.
     intros.
     MP (p [->] [~] p). auto.
@@ -368,14 +372,14 @@ Section deduction_facts.
     AX.
   Qed.
   
-  Lemma contrad_elim : forall T p q, (T |- [~] p [->] [~] q) -> (T |- q [->] p).
+  Lemma contrad_elim : forall T p q, (T ||- [~] p [->] [~] q) -> (T ||- q [->] p).
   Proof.
     intros.
     MP ([~] p [->] [~] q). auto.
     AX.
   Qed.
   
-  Lemma contrad_add : forall T p q, (T |- p [->] q) -> (T |- [~] q [->] [~] p).
+  Lemma contrad_add : forall T p q, (T ||- p [->] q) -> (T ||- [~] q [->] [~] p).
   Proof.
     intros.
     MP ([~] [~] p [->] [~] [~] q).
@@ -390,7 +394,7 @@ Section deduction_facts.
     AX.
   Qed.
   
-  Lemma destruct_and : forall T p q, (T |- p) -> (T |- q) -> (T |- p [/\] q).
+  Lemma destruct_and : forall T p q, (T ||- p) -> (T ||- q) -> (T ||- p [/\] q).
   Proof.
     unfold andl.
     intros.
@@ -409,7 +413,7 @@ Section deduction_facts.
       AX.
   Qed.
   
-  Lemma and_destruct : forall T p q, (T |- p [/\] q) -> ((T |- p) /\ (T |- q)).
+  Lemma and_destruct : forall T p q, (T ||- p [/\] q) -> ((T ||- p) /\ (T ||- q)).
   Proof.
     unfold andl.
     intros.
@@ -433,7 +437,7 @@ Section deduction_facts.
       AX.
   Qed.
   
-  Lemma destruct_iff : forall T p q, (T |- p [->] q) -> (T |- q [->] p) -> (T |- p [<->] q).
+  Lemma destruct_iff : forall T p q, (T ||- p [->] q) -> (T ||- q [->] p) -> (T ||- p [<->] q).
   Proof.
     intros.
     unfold iffl.
@@ -445,7 +449,7 @@ Section deduction_facts.
   Ltac SPLIT := apply destruct_iff || apply destruct_and.
   Ltac DESTRUCT h := apply and_destruct in h; destruct h.
   
-  Lemma pr_rewrite2 : forall {T} {p0 p1 r}, (T |- p0 [<->] p1) -> (T |- p0 [->] r) -> (T |- p1 [->] r).
+  Lemma pr_rewrite2 : forall {T} {p0 p1 r}, (T ||- p0 [<->] p1) -> (T ||- p0 [->] r) -> (T ||- p1 [->] r).
   Proof.
     intros.
     DESTRUCT H.
@@ -454,14 +458,14 @@ Section deduction_facts.
     auto.
   Qed.
 
-  Lemma fal_R : forall T p t, (T |- fal p) -> (T |- p.(t)).
+  Lemma fal_R : forall T p t, (T ||- fal p) -> (T ||- p.(t)).
   Proof.
     intros.
     MP (fal p). auto.
     AX.
   Qed.
 
-  Lemma fal_R2 : forall T p t s, (T |- fal (fal p)) -> (T |- p.(t, s)).
+  Lemma fal_R2 : forall T p t s, (T ||- fal (fal p)) -> (T ||- p.(t, s)).
   Proof.
     intros.
     assert (p .['0; (sfc s .; \0)].(t) = p.(t, s)).
@@ -503,7 +507,7 @@ Section deduction_facts.
         auto.
   Qed.
 
-  Lemma ext_R : forall T p t, (T |- p.(t)) -> (T |- ext p).
+  Lemma ext_R : forall T p t, (T ||- p.(t)) -> (T ||- ext p).
   Proof.
     intros.
     unfold ext.
@@ -517,7 +521,7 @@ Section deduction_facts.
     AX.
   Qed.
 
-  Lemma ext_L : forall T p q, (sfT T |- p [->] sf q) -> (T |- ext p [->] q).
+  Lemma ext_L : forall T p q, (sfT T ||- p [->] sf q) -> (T ||- ext p [->] q).
   Proof.
     unfold ext.
     intros.
@@ -541,7 +545,7 @@ Section deduction_facts.
   
   Ltac SPECIALIZE h u := apply fal_R with (t := u) in h.
   
-  Lemma fal_and_destruct : forall T p q, (T |- fal (p [/\] q)) -> ((T |- fal p) /\ (T |- fal q)).
+  Lemma fal_and_destruct : forall T p q, (T ||- fal (p [/\] q)) -> ((T ||- fal p) /\ (T ||- fal q)).
   Proof.
     intros.
     split.
@@ -549,7 +553,7 @@ Section deduction_facts.
       MP (fal ((p [/\] q) [->] p)).
       GEN.
       INTRO.
-      assert (sfT T :+ (p [/\] q) |- p [/\] q). AX.
+      assert (sfT T :+ (p [/\] q) ||- p [/\] q). AX.
       DESTRUCT H0.
       auto.
       AX.
@@ -557,13 +561,13 @@ Section deduction_facts.
       MP (fal ((p [/\] q) [->] q)).
       GEN.
       INTRO.
-      assert (sfT T :+ (p [/\] q) |- p [/\] q). AX.
+      assert (sfT T :+ (p [/\] q) ||- p [/\] q). AX.
       DESTRUCT H0.
       auto.
       AX.
   Qed.
   
-  Lemma fal_trans : forall T p q r, (T |- fal (p [->] q)) -> (T |- fal (q [->] r)) -> (T |- fal (p [->] r)).
+  Lemma fal_trans : forall T p q r, (T ||- fal (p [->] q)) -> (T ||- fal (q [->] r)) -> (T ||- fal (p [->] r)).
   Proof.
     intros.
     MP (fal (p [->] q)). auto.
@@ -584,7 +588,7 @@ Section deduction_facts.
     AX.
   Qed.
   
-  Lemma eql_refl : forall T t u, (T |- t [=] u) -> (T |- u [=] t).
+  Lemma eql_refl : forall T t u, (T ||- t [=] u) -> (T ||- u [=] t).
   Proof.
     intros.
     MP (t [=] u). auto.
@@ -604,7 +608,7 @@ Section deduction_facts.
     AX.
   Qed.
 
-  Lemma eql_rewrite : forall T p t s, (T |- t [=] s) -> (T |- p.(t)) -> (T |- p.(s)).
+  Lemma eql_rewrite : forall T p t s, (T ||- t [=] s) -> (T ||- p.(t)) -> (T ||- p.(s)).
   Proof.
     intros.
     MP (p.(t)). auto.
@@ -612,7 +616,7 @@ Section deduction_facts.
     AX.
   Qed.
 
-  Lemma eql_trans : forall T t u v, (T |- t [=] u) -> (T |- u [=] v) -> (T |- t [=] v).
+  Lemma eql_trans : forall T t u v, (T ||- t [=] u) -> (T ||- u [=] v) -> (T ||- t [=] v).
   Proof.
     intros.
     MP (u [=] v). auto.

@@ -2,8 +2,8 @@ Require Export SetoidClass.
 Require Import FOPL.FOPL.
 Require Import FOPL.Deduction.
 
-Definition preq {L :Lang} (T :Th) (c d :LC) := T |- c[=]d.
-Definition priff {L :Lang} (T :Th) (p q :LP) := T |- p[<->]q.
+Definition preq {L :Lang} (T :Th) (c d :LC) := T ||- c[=]d.
+Definition priff {L :Lang} (T :Th) (p q :LP) := T ||- p[<->]q.
 
 Lemma priff_Equiv : forall (L :Lang) T, Equivalence (priff T).
 Proof.
@@ -45,10 +45,11 @@ Proof.
     apply eql_trans.
 Qed.
 Notation "p ==[ T ] q" := ((@equiv _ (Setoid_LC T)) p q) (at level 55).
-Lemma preq0 : forall {L : Lang} T c d, (T |- c[=]d) -> (c ==[T] d).
+
+Lemma preq0 : forall {L : Lang} T c d, (T ||- c[=]d) <-> (c ==[T] d).
 Proof.
   intros.
-  apply H.
+  reflexivity.
 Qed.
 
 Program Instance Setoid_LP {L :Lang} (T : Th) : Setoid LP := {|equiv:=priff T|}.
@@ -75,6 +76,12 @@ Proof.
     TRANS y. auto. auto.
 Qed.
 Notation "p ==( T ) q" := ((@equiv _ (Setoid_LP T)) p q) (at level 55).
+
+Lemma priff0 : forall {L : Lang} T p q, (T ||- p[<->]q) <-> (p ==(T) q).
+Proof.
+  intros.
+  reflexivity.
+Qed.
 
 Instance rew_LC_Fc1 : forall {L : Lang} (T : @Th L) c, 
   Proper ((@equiv _ (Setoid_LC T)) ==> (@equiv _ (Setoid_LC T))) (Fc1 c).
@@ -266,7 +273,7 @@ Proof.
   DESTRUCT H0.
   SPLIT.
   - repeat INTRO.
-    assert(T :+ x[/\]x0 |- x[/\]x0). AX.
+    assert(T :+ x[/\]x0 ||- x[/\]x0). AX.
     DESTRUCT H3.
     SPLIT.
     MP x. auto.
@@ -274,7 +281,7 @@ Proof.
     MP x0. auto.
     WL. auto.
   - repeat INTRO.
-    assert(T :+ y[/\]y0 |- y[/\]y0). AX.
+    assert(T :+ y[/\]y0 ||- y[/\]y0). AX.
     DESTRUCT H3.
     SPLIT.
     MP y. auto.
@@ -323,7 +330,7 @@ Proof.
   DESTRUCT H0.
   SPLIT.
   - repeat INTRO.
-    assert(T :+ (x [<->] x0) |- x[<->]x0). AX.
+    assert(T :+ (x [<->] x0) ||- x[<->]x0). AX.
     DESTRUCT H3.
     SPLIT.
     INTRO.
@@ -341,7 +348,7 @@ Proof.
     WL. auto.
     WL. WL. auto.
   - repeat INTRO.
-    assert(T :+ (y [<->] y0) |- y[<->]y0). AX.
+    assert(T :+ (y [<->] y0) ||- y[<->]y0). AX.
     DESTRUCT H3.
     SPLIT.
     INTRO.
@@ -376,7 +383,3 @@ Proof.
     MP y. auto.
     auto.
 Qed.
-
-Ltac REWRITE H := setoid_rewrite (preq0 _ _ _ H).
-Ltac REWRITEl H := setoid_rewrite -> (preq0 _ _ _ H) at 1.
-Ltac REWRITEr H := setoid_rewrite <- (preq0 _ _ _ H) at 1.
