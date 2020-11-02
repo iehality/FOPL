@@ -3,51 +3,7 @@ Require Import Lia.
 Require Export FOPL.FOPL.
 Require Export FOPL.Deduction.
 Require Export FOPL.SetoidL.
-
-
-Ltac Tpp :=
-  match goal with
-  | |- (?T :+ ?p ||- _) => assert(T :+ p ||- p);[AX|idtac]
-  | _ => idtac
-  end.
-
-Ltac Tpqp :=
-  match goal with
-  | |- (?T :+ ?p :+ ?q ||- _) => assert(T :+ p :+ q ||- p);[AX|idtac]
-  | _ => idtac
-  end.
-
-Ltac REWRITE X :=
-  let U := fresh "T" in
-  match (type of X) with
-  | ?T ||- ?x[=]?y => 
-    pose (U := T);
-    rewrite -> preq0 in X;
-    fold U in X;
-    fold U;
-    rewrite X;
-    rewrite <- preq0 in X;
-    unfold U in X;
-    unfold U;
-    clear U
-  | _ => idtac
-  end.
-
-Ltac REWRITE_rl X :=
-  let U := fresh "T" in
-  match (type of X) with
-  | ?T ||- ?x[=]?y => 
-    pose (U := T);
-    rewrite -> preq0 in X;
-    fold U in X;
-    fold U;
-    rewrite <- X;
-    rewrite <- preq0 in X;
-    unfold U in X;
-    unfold U;
-    clear U
-  | _ => idtac
-  end.
+Require Export FOPL.Tactics.
 
 Definition theory {L : Lang} (T : Th) := fun p => T ||- p.
 Definition uniT {L : Lang} (T U : Th) := fun x => T x \/ U x.
@@ -88,34 +44,18 @@ Section deduction_facts2.
     contradiction.
   Qed.
 
-  Lemma null_pr : forall T U p, null T -> null U -> (T ||- p) -> (U ||- p).
+  Lemma null_sfT : forall T, null T -> T ≡ (sfT T).
   Proof.
-    assert(forall T p, null T -> (T ||- p) -> forall U, null U -> (U ||- p)).
-    - intros T p H H0.
-      induction H0.
-      + intros.
-        GEN.
-        apply IHprovable.
-        apply nullT_nullsfT. auto.
-        apply nullT_nullsfT. auto.
-      + intros.
-        MP p.
-        auto.
-        auto.
-      + intros.
-        specialize(H p).
-        contradiction.
-      + intros. AX.
-      + intros. AX.
-      + intros. AX.
-      + intros. AX.
-      + intros. AX.
-      + intros. AX.
-      + intros. AX.
-      + intros. AX.
-    - intros.
-      apply H with (T:=T).
-      auto. auto. auto. 
+    intros.
+    unfold eqvT, incT.
+    split.
+    intros.
+    specialize (H p).
+    contradiction.
+    intros.
+    rewrite <- nullT_nullsfT in H.
+    specialize(H p).
+    contradiction.
   Qed.
 
   Lemma fal_Fal : forall p n, [fal] Fal n p = Fal n ([fal] p).
@@ -173,9 +113,8 @@ Section deduction_facts2.
       simpl. auto.
       simpl.
       GEN.
-      apply null_pr with (T:=T).
-      auto.
-      rewrite nullT_nullsfT. auto.
+      apply TInclusion with (T:=T).
+      apply null_sfT. auto.
       auto.
     - MP (Fal (Ar p) p). auto.
       unfold sf.
@@ -184,7 +123,6 @@ Section deduction_facts2.
 
   Inductive Array (f : nat -> LP) (n0 : nat) : Th := 
   | array : forall n, n < n0 -> Array f n0 (f n).
-  
 
   Fixpoint Sum (f : nat -> LP) (n0 : nat) : Th := 
     match n0 with
@@ -251,9 +189,9 @@ Section deduction_facts2.
     induction n.
     - simpl.
       intros.
-      apply null_pr with (T:=Null).
+      apply TInclusion with (T:=Null).
+      apply null_sfT.
       apply nullNull.
-      apply nullT_nullsfT. apply nullNull.
       auto.
     - simpl.
       intros.
@@ -441,32 +379,15 @@ Section deduction_facts2.
     apply sfT_inc. auto.
     auto.
   Qed.
-    un 
 
-
-  Lemma sfTtheory : forall T, sfT (theory T) :=: theory (sfT T).
+  Lemma sfT_MP : forall T p q, (T ||- p) -> (sfT T :+ sf p ||- q) -> (sfT T ||- q).
   Proof.
     intros.
-    split.
-    - unfold incT.
-      intros.
-      destruct H as [q].
-      destruct H.
-      Abort.
-
-
-
-  Lemma theory_pr : forall T p, (theory T ||- p) -> (T ||- p).
-  Proof.
-    assert(forall U p, (U ||- p) -> forall T, U :=: T -> (T ||- p)).
-    - intros U p H. 
-      induction H.
-      + intros.
-        GEN.
-        apply IHprovable.
-        specialize (IHprovable (sfT T0)).
-        
-    -
+    MP (sf p).
+    apply sf_add. auto.
+    INTRO.
+    auto.
+  Qed. 
   
   Lemma fal_repl : forall T p, 
     ([fal][fal]p) ==(T) ([fal][fal]p.['1;('0;fun x => '(S (S x)))]).
@@ -474,8 +395,8 @@ Section deduction_facts2.
     assert(forall T p, T ||- ([fal][fal]p)[->]([fal][fal]p.['1;('0;fun x => '(S (S x)))])).
     - intros.
       INTRO.
-      GEN. apply sf_dsb.
-      GEN. apply sf_dsb.
+      GEN.
+      GEN.
       assert(p.['0;('1;fun x => '(4 + x))].('1, '0) = p.['1;('0;fun x => '(S (S x)))]). {
         rewrite <- nested_rew.
         apply rew_rew.
@@ -515,39 +436,7 @@ Section deduction_facts2.
       rewrite -> H0 at 2.
       auto.
   Qed.
-
-  Lemma pr_subs : forall (T : Th) p, (T ||- p) -> forall U, (forall q, T q -> (U ||- q)) -> (U ||- p).
-  Proof.
-    intros T p H.
-    induction H.
-    - intros.
-      GEN.
-      apply IHprovable. 
-  
-  Lemma sfT_add : forall T p, (T ||- p) -> (sfT T ||- sf p).
-  Proof.
-    unfold sf.
-    intros.
-    induction H.
-    - simpl.
-      apply GEN in IHprovable.
-      assert((([fal]q.['0;fun x => '(3 + x)]).('0)) = ([fal] q.['0; fun x => sfc '(S x)])). {
-        unfold sfc.
-        simpl.
-        rewrite <- nested_rew.
-        apply fal_eq.
-        apply rew_rew.
-        intros.
-        destruct n. simpl. auto.
-        auto.
-      }
-      rewrite <- H0.
-      apply fal_R.
-      rewrite -> fal_repl.
-      rewrite <- nested_rew.
-      simpl.
-      GEN.
-  Abort.
   
 End deduction_facts2.
 
+Ltac MPsf h := apply (@sfT_MP _ h _).

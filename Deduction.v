@@ -9,10 +9,40 @@ Definition Th {L : Lang} := @LP L -> Prop.
   
   (** * Hilbert Style Deduction System *)
 
-Definition alt {L : Lang} (p : LP) : LP := p.[fun x => '(pred x)].
+Fixpoint alterablet {L : Lang} (n : nat) (t0 : LC) : bool :=
+  match t0 with
+  | 'v        => negb (n =? v)
+  | Fc1 _ x   => alterablet n x
+  | Fc2 _ x y => alterablet n x && alterablet n y
+  | _         => true
+  end.
+  
+Fixpoint alterable0 {L : Lang} (n : nat) (p0 : LP) : bool :=
+  match p0 with
+  | x[=]y     => alterablet n x && alterablet n y
+  | Pd1 c x   => alterablet n x
+  | Pd2 c x y => alterablet n x && alterablet n y
+  | imp p q   => alterable0 n p && alterable0 n q
+  | neg p     => alterable0 n p
+  | fal p     => alterable0 (S n) p
+  | _         => true
+  end.
+
+Definition alterable {L : Lang} p := alterable0 0 p.
+
+Lemma alt_sf {L : Lang} : forall p, alt (sf p) = p.
+Proof.
+  intros.
+  unfold alt, sf.
+  rewrite <- nested_rew.
+  simpl.
+  rewrite rew_id.
+  auto.
+Qed. 
   
 Definition sfT {L : Lang} (T : Th) := fun p => sf (alt p) = p /\ T (alt p).
-  
+Notation "⮅" := sfT.
+
 Inductive provable {L : Lang} (T : Th) : LP -> Prop :=
   | GEN  : forall q, provable (sfT T) q -> provable T (fal q)
   | MP   : forall p q, provable T p -> provable T (p [->] q) -> provable T q
@@ -26,12 +56,9 @@ Inductive provable {L : Lang} (T : Th) : LP -> Prop :=
   | Eq0  : forall t, provable T (t [=] t)
   | Eq1  : forall p t u, provable T (t [=] u [->] p.(t) [->] p.(u)).
 
-Ltac MP h := apply (@MP _ _ h _).
-Ltac GEN := apply GEN.
-
 Notation "T ||- p" := (provable T p) (at level 95).
 
-Definition Consis {L : Lang} (T : Th) := ~ exists p, (T ||- p) /\ (T ||- [~] p).
+Definition Consis {L : Lang} (T : Th) := ~ exists p, (T ||- p) /\ (T ||- [~]p).
 
 Definition addT {L : Lang} (T : Th) p := fun x => T x \/ x = p.
 Definition elmT {L : Lang} (T : Th) p := fun x => T x /\ x <> p.
@@ -40,11 +67,14 @@ Definition eqvT {L : Lang} (T U : Th) := (incT T U) /\ (incT U T).
 Notation "T :+ p" := (addT T p) (at level 71, left associativity).
 Notation "T :- p" := (elmT T p) (at level 71, left associativity). 
 Notation "T ⊆ U" := (incT T U) (at level 72, left associativity).
-Notation "T :=: U" := (eqvT T U) (at level 72, left associativity).
+Notation "T ≡ U" := (eqvT T U) (at level 72, left associativity).
 
   Definition TRUE {L : Lang} := [O][=][O].  
 
 Section deduction_facts.
+
+  Ltac GEN := apply GEN.
+  Ltac MP h := apply (@MP _ _ h _).
 
   Variable L : Lang.
 
@@ -206,16 +236,6 @@ Section deduction_facts.
   Qed.
   
   Ltac INTRO := apply Deduction.
-
-  Lemma alt_sf : forall p, alt (sf p) = p.
-  Proof.
-    intros.
-    unfold alt, sf.
-    rewrite <- nested_rew.
-    simpl.
-    rewrite rew_id.
-    auto.
-  Qed. 
   
   Lemma sf_dsb0 : forall T p, (sfT T :+ sf p) ⊆ (sfT (T :+ p)).
   Proof.
@@ -637,6 +657,9 @@ Section deduction_facts.
 
 End deduction_facts.
 
+Ltac GEN0 := apply GEN.
+Ltac GEN := apply GEN; try apply sf_dsb.
+Ltac MP h := apply (@MP _ _ h _).
 Ltac MPI h := apply MPintro with (p:=h).
 Ltac AX := apply p__p || apply Pr1 || apply Pr2 || apply Pr3 || apply Qt0 || apply Qt1 || apply Qt2 || apply Eq0 || apply Eq1 || unfold addT; apply Pr0; auto.
 Ltac TRANS h := apply imp_trans with (q:=h).

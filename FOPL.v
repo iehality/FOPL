@@ -124,6 +124,9 @@ Notation "p .[ s ]" := (rew s p) (at level 0).
 Notation "p .[ n ; s ]" := (p .[(n;s)]) (at level 0).
 Notation "\0" := (fun x => (var x)) (at level 0).
 Definition sf {L : Lang} (p : LP) : LP := p .[fun x => (var (S x))].
+Definition alt {L : Lang} (p : LP) : LP := p.[fun x => '(pred x)].
+Notation "↑" := sf.
+Notation "↓" := alt.
 Definition norm {L : Lang} c p := p .[fun x => c].
 Notation "p .( x )" := (p .[x;\0]) (at level 0).
 Notation "p .( x , y )" := (p .[x; (y; \0)]) (at level 0).
