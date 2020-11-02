@@ -421,8 +421,29 @@ Section deduction_facts2.
       auto. 
   Qed.
 
+  Lemma sfT_inc : forall T U, (T ⊆ U) -> (sfT T ⊆ sfT U).
+  Proof.
+    unfold sfT, incT.
+    intros.
+    destruct H0.
+    auto.
+  Qed.
 
-  
+  Lemma sf_add : forall T p, (T ||- p) -> (sfT T ||- sf p).
+  Proof.
+    intros.
+    apply proof_compact in H.
+    destruct H as [f].
+    destruct H as [n].
+    destruct H.
+    apply sfSumsfp in H0.
+    apply TInclusion with (T:=sfT (Sum f n)).
+    apply sfT_inc. auto.
+    auto.
+  Qed.
+    un 
+
+
   Lemma sfTtheory : forall T, sfT (theory T) :=: theory (sfT T).
   Proof.
     intros.
