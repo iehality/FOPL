@@ -391,6 +391,18 @@ Section deduction_facts.
     AX.
     AX.
   Qed.
+
+  Lemma RAA : forall T p q, (T :+ p ||- q) -> (T :+ p ||- [~] q) -> (T ||- [~] p).
+  Proof.
+    intros.
+    apply neg_intro.
+    INTRO.
+    apply explosion.
+    unfold Consis. 
+    intro. contradict H1.
+    exists q.
+    auto.
+  Qed.
   
   Lemma contrad_elim : forall T p q, (T ||- [~] p [->] [~] q) -> (T ||- q [->] p).
   Proof.
@@ -666,7 +678,8 @@ Ltac TRANS h := apply imp_trans with (q:=h).
 Ltac INTRO := apply Deduction.
 Ltac SPLIT := apply destruct_iff || apply destruct_and.
 Ltac DESTRUCT h := apply and_destruct in h; destruct h.
-Ltac SPECIALIZE h u := apply fal_R with (t := u) in h.
+Ltac SPECIALIZE H u := apply fal_R with (t := u) in H; simpl in H.
 Ltac EXISTS u := apply ext_R with (t := u).
 Ltac SYMMETRY := apply eql_refl.
+Ltac RAA h := apply RAA with (q:=h).
 Ltac WL := apply weakening.

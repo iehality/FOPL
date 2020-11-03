@@ -436,7 +436,15 @@ Section deduction_facts2.
       rewrite -> H0 at 2.
       auto.
   Qed.
+
+  Lemma neq_symm : forall T t u, (T ||- t[=/=]u) -> (T ||- u[=/=]t).
+  Proof.
+    intros.
+    RAA (t[=]u).
+    SYMMETRY. AX.
+    WL. auto.
+  Qed.
   
 End deduction_facts2.
 
-Ltac MPsf h := apply (@sfT_MP _ h _).
+Ltac MPsf h := repeat WL; apply (@sfT_MP _ h _).

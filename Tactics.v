@@ -16,6 +16,13 @@ Ltac Tpqp :=
   | _ => idtac
   end.
 
+Ltac foldeq := rewrite preq0.
+Ltac foldeqh H := rewrite preq0 in H.
+Ltac unfoldeq := rewrite <- preq0.
+Ltac unfoldeqh H := rewrite <- preq0 in H.
+
+Ltac SPECIALIZE2 H c d := apply fal_R2 with (t:=c) (s:=d) in H; simpl in H.
+
 Ltac REWRITE X :=
   let U := fresh "T" in
   match (type of X) with
@@ -24,7 +31,7 @@ Ltac REWRITE X :=
     rewrite -> preq0 in X;
     fold U in X;
     fold U;
-    rewrite X;
+    rewrite X at 1;
     rewrite <- preq0 in X;
     unfold U in X;
     unfold U;
@@ -40,7 +47,7 @@ Ltac REWRITE_r X :=
     rewrite -> preq0 in X;
     fold U in X;
     fold U;
-    rewrite <- X;
+    rewrite <- X at 1;
     rewrite <- preq0 in X;
     unfold U in X;
     unfold U;

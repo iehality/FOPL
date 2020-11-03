@@ -82,6 +82,7 @@ Notation "p [<->] q" := (iffl p q) (at level 65, right associativity, q at level
 Definition ext {L : Lang}  p := neg (fal (neg p)).
 Notation "[ext] p" := (ext p) (at level 66, right associativity).
 Notation "[∃] p" := (ext p) (at level 66, right associativity).
+Notation "a [=/=] b" := ([~] a [=] b) (at level 60, no associativity).
 
 Definition slide {A : Type} (s : nat -> A) (n : A) : nat -> A := fun x0 => 
   match x0 with

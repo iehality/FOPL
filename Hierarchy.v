@@ -34,9 +34,9 @@ Fixpoint arithhie (b : bool) (n0 : nat) (p0 : LP) : bool :=
 
 Definition pieform n p := arithhie true (2*n) p.
 Definition sigmaform n p := arithhie false (2*n) p.
-Definition Delta0 p := exists q, (delta0 q = true) /\ (Q |- p[<->]q).
-Definition Pie n p := exists q, (pieform n q = true) /\ (Q |- p[<->]q).
-Definition Sigma n p := exists q, (sigmaform n q = true) /\ (Q |- p[<->]q).
+Definition Delta0 p := Ar p = 0 /\ exists q, (delta0 q = true) /\ (Q ||- p[<->]q).
+Definition Pie n p := Ar p = 0 /\ exists q, (pieform n q = true) /\ (Q ||- p[<->]q).
+Definition Sigma n p := Ar p = 0 /\ exists q, (sigmaform n q = true) /\ (Q ||- p[<->]q).
 
 Lemma delta0_rew : forall p s, delta0 p = delta0 p.[s].
 Proof.
@@ -60,7 +60,7 @@ Fixpoint And (f : nat -> LP) (n0 : nat) :=
   | S n => (And f n)[/\](f n0)
   end.
 
-Lemma bounded_quantifiar : forall n p, Q |- ([fal]'0[<=][n][->]p)[<->](And (fun x => p.([x])) n).
+Lemma bounded_quantifiar : forall n p, Q ||- ([fal]'0[<=][n][->]p)[<->](And (fun x => p.([x])) n).
 Proof.
   induction n.
   - intros.
@@ -81,9 +81,8 @@ Proof.
     + INTRO.
       GEN.
       rewrite <- le_replace.
-      apply sf_dsb.
+      unfold sfc.
       simpl.
-      INTRO.
-
-      MP ('0[=][O]).
+      apply ext_L.
+      apply sf_dsb.
 Abort.

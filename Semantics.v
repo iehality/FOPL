@@ -1,8 +1,7 @@
 Require Export SetoidClass.
 Require Export RelationClasses.
 Require Import Lia.
-Require Export FOPL.FOPL.
-Require Export FOPL.Deduction.
+Require Export FOPL.Basic.
 
 Set Implicit Arguments.
 
@@ -310,11 +309,10 @@ Section Semantics.
 
   Lemma mthsfT: forall M T, modelsTh M T -> modelsTh M (sfT T).
   Proof.
-    unfold modelsTh. unfold sfT. unfold sf. unfold models.
+    unfold modelsTh, sfT, sf, models.
     intros.
-    destruct H0 as [q].
     destruct H0.
-    rewrite -> H0.
+    rewrite <- H0.
     rewrite <- lp_iff1.
     apply H.
     auto.
