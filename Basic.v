@@ -16,7 +16,7 @@ Fixpoint Fal {L : Lang} n0 p :=
   match n0 with
   | 0 => p
   | S n => [fal](Fal n p)
-  end.
+  end.  
 
 Section deduction_facts2.
   Variable L : Lang.
@@ -443,6 +443,15 @@ Section deduction_facts2.
     RAA (t[=]u).
     SYMMETRY. AX.
     WL. auto.
+  Qed.
+
+  Lemma TNNPP : forall T p, p ==(T) [~][~]p.
+  Proof.
+    unfold equiv. simpl. unfold priff.
+    intros.
+    SPLIT.
+    apply pr_NN.
+    apply pr_NNPP.
   Qed.
   
 End deduction_facts2.

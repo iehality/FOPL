@@ -1,6 +1,7 @@
 
 Require Import Arith.
 Require Import Lia.
+Require Import Bool.
 Require Import FOPL.Arithmetic.
 
 Set Implicit Arguments.
@@ -34,9 +35,9 @@ Fixpoint arithhie (b : bool) (n0 : nat) (p0 : LP) : bool :=
 
 Definition pieform n p := arithhie true (2*n) p.
 Definition sigmaform n p := arithhie false (2*n) p.
-Definition Delta0 p := Ar p = 0 /\ exists q, (delta0 q = true) /\ (Q ||- p[<->]q).
-Definition Pie n p := Ar p = 0 /\ exists q, (pieform n q = true) /\ (Q ||- p[<->]q).
-Definition Sigma n p := Ar p = 0 /\ exists q, (sigmaform n q = true) /\ (Q ||- p[<->]q).
+Definition Delta0 p := Ar p = 0 /\ exists q, Ar q = 0 /\ Is_true (delta0 q) /\ (Q ||- p[<->]q).
+Definition Pie n p := Ar p = 0 /\ exists q, Is_true (pieform n q) /\ (Q ||- p[<->]q).
+Definition Sigma n p := Ar p = 0 /\ exists q, Is_true (sigmaform n q) /\ (Q ||- p[<->]q).
 
 Lemma delta0_rew : forall p s, delta0 p = delta0 p.[s].
 Proof.

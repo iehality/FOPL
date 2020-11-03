@@ -41,7 +41,7 @@ Proof.
 Qed. 
   
 Definition sfT {L : Lang} (T : Th) := fun p => sf (alt p) = p /\ T (alt p).
-Notation "⮅" := sfT.
+Notation "⇑" := sfT.
 
 Inductive provable {L : Lang} (T : Th) : LP -> Prop :=
   | GEN  : forall q, provable (sfT T) q -> provable T (fal q)
@@ -316,6 +316,17 @@ Section deduction_facts.
     AX.
     AX.
   Qed.
+
+  Lemma explosion0 : forall T p q, (T ||- p) -> (T ||- [~] p) -> (T ||- q).
+  Proof.
+    intros.
+    apply explosion.
+    unfold Consis.
+    intro. contradict H1.
+    exists p.
+    auto.
+  Qed.
+  
     
   Lemma deduction_inv : forall T p q, (T ||- p [->] q) -> (T :+ p ||- q).
   Proof.

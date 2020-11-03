@@ -25,15 +25,21 @@ Fixpoint innerNat (n0 : nat) : LC :=
 
 Notation "[ n ]" := (innerNat n) (at level 0).
 
-Lemma IN_rewc : forall n s, [n] = rewc s [n].
+Lemma IN_rewc : forall n s, rewc s [n] = [n].
 Proof.
   intros.
+  symmetry.
   apply constant_rew.
   induction n.
   simpl. 
   auto.
   simpl.
   auto.
+Qed.
+
+Lemma O0 : [O] = [0].
+Proof.
+  reflexivity.
 Qed.
 
 Inductive Q : Th :=
@@ -49,6 +55,9 @@ Inductive Q : Th :=
 Inductive PA : Th :=
   | PA_Q  : forall p, Q p -> PA p
   | IND   : forall p, PA (p.([0]) [->] ([fal] p [->] p..([S] '0)) [->] [fal] p).
+
+Ltac QAX0 := (apply NEQ0S || apply SINJ || apply PRED || apply PL0 || apply PLUS || apply ML0 || apply MULT || apply LE).
+Ltac QAX := try rewrite O0; unfold addT; apply Pr0; QAX0.
 
 Lemma PL00 : forall c, [0][+]c ==[Q] c.
 Proof.
@@ -143,38 +152,6 @@ Proof.
     auto. 
 Qed.
 
-Notation 𝒙 := ('0).
-Notation 𝒚 := ('1).
-Notation 𝒛 := ('2).
-
-Lemma le_asymm : forall x y, Q ||- x[<=]y [->] y[<=]x [->] x[=]y.
-Proof.
-  intros.
-  rewrite <- le_replace.
-  rewrite <- le_replace.
-  apply ext_L.
-  INTRO.
-  assert(↑ (([∃] (sfc y) [+] 𝒙 [=] sfc x)) = TRUE).
-  unfold ext, sf, sfc.
-  simpl. fold ext.
-  unfold ext, sf, sfc.
-  simpl.
-  rewrite <- nested_rewc. 
-  rewrite <- nested_rewc.
-  simpl. 
-  fold ext.
-  assert(sf (([ext] (sfc y)[+]'0[=]sfc x)[->]x[=]y) = ([ext](sfc (sfc y))[+]'0[=]sfc (sfc x))[->](sfc x)[=](sfc y)). {
-    unfold ext, sf, sfc.
-    simpl.
-    unfold ext, sf, sfc.
-    simpl.
-
-    reflexivity.
-
-  unfold sf. simpl.
-  apply ext_L.
-  INTRO.\
-
 Lemma plus_compl : forall n m, [n][+][m] ==[Q] [n + m].
 Proof.
   intros.
@@ -219,13 +196,13 @@ Proof.
   intros.
   rewrite <- le_replace.
   unfold sfc.
-  repeat rewrite <- IN_rewc.
+  repeat rewrite IN_rewc.
   EXISTS [m - n].
   simpl.
-  repeat rewrite <- IN_rewc.
+  repeat rewrite IN_rewc.
   assert (m = n + (m - n)).
   lia.
-  rewrite -> H0 at 2.
+  rewrite H0 at 2.
   apply plus_compl.
   AX. apply LE.
 Qed.
@@ -267,69 +244,4 @@ Proof.
     SPECIALIZE2 H ([n][+]c) ([n][+]d).
     auto.
     auto.
-Qed.
-
-Lemma O0 : [O] ==[Q] [0].
-Proof.
-  reflexivity.
-Qed.
-
-Lemma neq_compl : forall n m, n <> m -> (Q ||- [n][=/=][m]).
-Proof.
-  assert(forall n m : nat, Q ||- [n] [=/=] [S n + m]).
-  - intros.
-    assert([S n + m] ==[Q] [n][+][S m]). symmetry.
-    assert(n + S m = S n + m). lia.
-    rewrite <- H. apply plus_compl.
-    rewrite H.
-    assert([n] ==[Q] [n][+][0]). symmetry.
-    assert(n = n + 0). lia.
-    rewrite H0 at 2.
-    apply plus_compl.
-    rewrite H0 at 1.
-    simpl.
-    RAA ([O][=][S][m]).
-    apply deduction_inv.
-    apply plus_inj.
-    WL.
-    rewrite O0.
-    assert(Q ||- [fal][0][=/=][S]'0). AX. apply NEQ0S.
-    SPECIALIZE H1 [m].
-    auto.
-  - apply nat_neq.
-    auto.
-    intros.
-    apply neq_symm. auto.
-Qed.
-
-Lemma nle_compl : forall n m, ~ n <= m -> (Q ||- [~][n][<=][m]).
-Proof.
-  intros.
-  assert(m <= n /\ n <> m). lia. destruct H0.
-  apply NNPP.
-  apply le_not_lt.
-  assert(forall n m : nat, Q ||- [n] [=/=] [S n + m]).
-  - intros.
-    assert([S n + m] ==[Q] [n][+][S m]). symmetry.
-    assert(n + S m = S n + m). lia.
-    rewrite <- H. apply plus_compl.
-    rewrite H.
-    assert([n] ==[Q] [n][+][0]). symmetry.
-    assert(n = n + 0). lia.
-    rewrite H0 at 2.
-    apply plus_compl.
-    rewrite H0 at 1.
-    simpl.
-    RAA ([O][=][S][m]).
-    apply deduction_inv.
-    apply plus_inj.
-    WL.
-    rewrite O0.
-    assert(Q ||- [fal][0][=/=][S]'0). AX. apply NEQ0S.
-    SPECIALIZE H1 [m].
-    auto.
-  - apply nat_neq.
-    auto.
-    intros.
-    apply neq_symm. auto.
 Qed.

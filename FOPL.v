@@ -66,6 +66,10 @@ Inductive LP {L : Lang} :=
 | fal : LP -> LP.
 
 Notation "' v " := (var v) (at level 5).
+Notation "𝟬" := ('0).
+Notation "𝟭" := ('1).
+Notation "𝟮" := ('2).
+Notation "𝟯" := ('3).
 Notation "[O]" := (cns) (at level 0).
 Notation "a [=] b" := (eql a b) (at level 60, right associativity).
 Notation "p [->] q" := (imp p q) (at level 62, right associativity, q at level 200).
@@ -126,6 +130,7 @@ Notation "p .[ n ; s ]" := (p .[(n;s)]) (at level 0).
 Notation "\0" := (fun x => (var x)) (at level 0).
 Definition sf {L : Lang} (p : LP) : LP := p .[fun x => (var (S x))].
 Definition alt {L : Lang} (p : LP) : LP := p.[fun x => '(pred x)].
+Notation "🠙 t" := (sfc t) (at level 5, right associativity).
 Notation "↑" := sf.
 Notation "↓" := alt.
 Definition norm {L : Lang} c p := p .[fun x => c].
