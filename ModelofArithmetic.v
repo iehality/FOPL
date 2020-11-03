@@ -113,6 +113,16 @@ Proof.
   auto.
 Qed.
 
+Lemma Valn_n : forall n s, Valt N s [n] = n.
+Proof.
+  induction n.
+  simpl. intros. auto.
+  simpl.
+  intros.
+  rewrite(IHn).
+  auto.
+Qed.
+
 Lemma PA_Soundness : forall p, (PA ||- p) -> (N |= p).
 Proof.
   assert (s:=Soundness).
@@ -376,4 +386,29 @@ Proof.
     apply H1.
     auto.
 Qed.
+
+Lemma Sigma1_val : forall p, Ar p = 1 -> (N |= [ext]p) -> exists n, N |= p.([n]).
+Proof.
+  unfold models.
+  intros.
+  specialize(H0 id).
+  rewrite M_ext in H0.
+  destruct H0.
+  exists x.
+  intros.
+  rewrite <- lp_iff1.
+  apply Val_iff with (s0:=(x;id)).
+  intros.
+  destruct n.
+  simpl.
+  symmetry. apply Valn_n.
+  lia.
+  auto.
+Qed.
+
+Lemma Sigma0_complete : forall p, Sigma 1 p -> (N |= p) -> (Q ||- p).
+Proof.
+
+
+
     

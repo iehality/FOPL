@@ -247,7 +247,9 @@ Section Semantics.
       reflexivity.
   Qed.
 
-  Lemma lp_iff0 : forall M p s0 s1 u, (forall n, s0 n == Valt M s1 (u n)) -> Valp M s0 p <-> Valp M s1 p.[u].
+  Lemma lp_iff0 : forall M p s0 s1 u, 
+    (forall n, s0 n == Valt M s1 (u n)) -> 
+    Valp M s0 p <-> Valp M s1 p.[u].
   Proof.
     intros M.
     induction p.
@@ -300,7 +302,8 @@ Section Semantics.
         apply miff. auto.
   Qed.
 
-  Lemma lp_iff1 : forall M p s u, Valp M (fun n => Valt M s (u n)) p <-> Valp M s p.[u].
+  Lemma lp_iff1 : forall M p s u, 
+    Valp M (fun n => Valt M s (u n)) p <-> Valp M s p.[u].
   Proof.
     intros.
     apply lp_iff0.
@@ -379,6 +382,89 @@ Section Semantics.
         simpl. reflexivity.
       + rewrite <- H2.
         auto.
+  Qed.
+
+  Lemma Val_eq : forall M t s0 s1, 
+    (forall n, n < Art t -> s0 n == s1 n) -> 
+    Valt M s0 t == Valt M s1 t.
+  Proof.
+    intros M.
+    induction t.
+    - simpl.
+      intros.
+      auto.
+    - simpl. intros. reflexivity.
+    - simpl. intros. reflexivity.
+    - simpl. intros.
+      rewrite (IHt _ s1). 
+      reflexivity.
+      auto.
+    - simpl. intros.
+      rewrite (IHt1 _ s1).
+      rewrite (IHt2 _ s1).
+      reflexivity.
+      intros.
+      apply H.
+      apply lt_lt_max_r. auto.
+      intros.
+      apply H.
+      apply lt_lt_max_l. auto.
+  Qed.
+  
+  Lemma Val_iff : forall M p s0 s1, 
+    (forall n, n < Ar p -> s0 n == s1 n) -> 
+    Valp M s0 p == Valp M s1 p.
+  Proof.
+    intros M.
+    induction p.
+    - simpl.
+      intros.
+      rewrite (Val_eq _ l _ s1).
+      rewrite (Val_eq _ l0 _ s1).
+      reflexivity.
+      intros. apply H. apply lt_lt_max_r. auto.
+      intros. apply H. apply lt_lt_max_l. auto.
+    - simpl.
+      intros.
+      reflexivity.
+    - simpl.
+      intros.
+      rewrite (Val_eq _ l _ s1).
+      reflexivity.
+      auto.
+    - simpl.
+      intros.
+      rewrite (Val_eq _ l _ s1).
+      rewrite (Val_eq _ l0 _ s1).
+      reflexivity.
+      intros. apply H. apply lt_lt_max_r. auto.
+      intros. apply H. apply lt_lt_max_l. auto.
+    - simpl.
+      intros.
+      rewrite (IHp1 s0 s1).
+      rewrite (IHp2 s0 s1).
+      reflexivity.
+      intros. apply H. apply lt_lt_max_r. auto.
+      intros. apply H. apply lt_lt_max_l. auto.
+    - simpl.
+      intros.
+      rewrite (IHp s0 s1).
+      reflexivity.
+      auto.
+    - simpl.
+      intros.
+      assert(forall t, Valp M (t; s0) p == Valp M (t; s1) p).
+      + intros.
+        apply IHp.
+        intros.
+        destruct n.
+        simpl. reflexivity.
+        simpl.
+        apply H.
+        lia.
+      + split.
+        intros. apply H0. auto.
+        intros. apply H0. auto.
   Qed.
 
 End Semantics.

@@ -323,7 +323,7 @@ Fixpoint Ar {L : Lang} (p0 : LP) : nat :=
   | Pd2 _ x y => max (Art x) (Art y)
   | imp p q   => max (Ar p) (Ar q)
   | neg p     => Ar p
-  | fal p     => Ar p - 1
+  | fal p     => pred (Ar p)
   end.
 
 Section rew_facts.
