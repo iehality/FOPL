@@ -6,13 +6,27 @@ Require Export FOPL.SetoidL.
 
 Ltac Tpp :=
   match goal with
-  | |- (?T :+ ?p ||- _) => assert(T :+ p ||- p);[AX|idtac]
+  | |- (?T ¦ ?p ||- _) => assert(T ¦ p ||- p);[auto|idtac]
   | _ => idtac
   end.
 
 Ltac Tpqp :=
   match goal with
-  | |- (?T :+ ?p :+ ?q ||- _) => assert(T :+ p :+ q ||- p);[AX|idtac]
+  | |- (?T ¦ ?p ¦ ?q ||- _) => assert(T ¦ p ¦ q ||- p);[auto|idtac]
+  | _ => idtac
+  end.
+
+Lemma MP' {L : Lang} : forall T p q, (T ||- p [->] q) -> (T ||- p) -> (T ||- q).
+Proof.
+  intros.
+  MP p.
+  auto. auto.
+Qed.
+
+Ltac papply X :=
+  match (type of X) with
+  | ?T ||- ?p [->] ?q =>
+    apply (@MP' _ _ p _ X) 
   | _ => idtac
   end.
 
@@ -58,7 +72,7 @@ Ltac REWRITE_r X :=
 Ltac REW_at_1 :=
   let X := fresh "H" in
   match goal with
-  | |- (?T :+ ?p ||- _) => assert(X : T :+ p ||- p);[AX|idtac]
+  | |- (?T ¦ ?p ||- _) => assert(X : T ¦ p ||- p);[auto|idtac]
   | _ => idtac
   end;
   let U := fresh "U" in
@@ -80,7 +94,7 @@ Ltac REW_at_1 :=
 Ltac REW_at_1r :=
   let X := fresh "H" in
   match goal with
-  | |- (?T :+ ?p ||- _) => assert(X : T :+ p ||- p);[AX|idtac]
+  | |- (?T ¦ ?p ||- _) => assert(X : T ¦ p ||- p);[auto|idtac]
   | _ => idtac
   end;
   let U := fresh "U" in
@@ -102,7 +116,7 @@ Ltac REW_at_1r :=
 Ltac REW_at_2 :=
   let X := fresh "H" in
   match goal with
-  | |- (?T :+ ?p :+ ?q ||- _) => assert(X : T :+ p :+ q ||- p);[AX|idtac]
+  | |- (?T ¦ ?p ¦ ?q ||- _) => assert(X : T ¦ p ¦ q ||- p);[auto|idtac]
   | _ => idtac
   end;
   let U := fresh "U" in
@@ -124,7 +138,7 @@ Ltac REW_at_2 :=
 Ltac REW_at_2r :=
   let X := fresh "H" in
   match goal with
-  | |- (?T :+ ?p :+ ?q ||- _) => assert(X : T :+ p :+ q ||- p);[AX|idtac]
+  | |- (?T ¦ ?p ¦ ?q ||- _) => assert(X : T ¦ p ¦ q ||- p);[auto|idtac]
   | _ => idtac
   end;
   let U := fresh "U" in

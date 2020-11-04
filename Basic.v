@@ -74,7 +74,7 @@ Section deduction_facts2.
       + simpl.
         intros.
         rewrite <- sentence_rew.
-        AX.
+        auto.
         lia.
       + simpl.
         intros.
@@ -127,7 +127,7 @@ Section deduction_facts2.
   Fixpoint Sum (f : nat -> LP) (n0 : nat) : Th := 
     match n0 with
     | 0 => Null
-    | S n => (Sum f n) :+ (f n)
+    | S n => (Sum f n) ¦ (f n)
     end.
 
   Lemma Sump : forall f n p, (Sum f n p) -> exists m, m < n /\ p = f m.
@@ -152,14 +152,12 @@ Section deduction_facts2.
       lia.
     - simpl.
       intros.
-      unfold addT.
       unfold lt in H.
       apply le_S_n in H.
       apply le_lt_or_eq in H.
       destruct H.
-      left.
       auto.
-      right.
+      rewrite H.
       auto.
   Qed.
 
@@ -310,39 +308,39 @@ Section deduction_facts2.
     - exists(fun _ => p).
       exists 1.
       split. auto.
-      simpl. AX.
+      simpl. auto.
     - exists(fun _ => [O][=][O]).
       exists 0.
       split. lia.
-      AX.
+      auto.
     - exists(fun _ => [O][=][O]).
       exists 0.
       split. lia.
-      AX.
+      auto.
     - exists(fun _ => [O][=][O]).
       exists 0.
       split. lia.
-      AX.
+      auto.
     - exists(fun _ => [O][=][O]).
       exists 0.
       split. lia.
-      AX.
+      auto.
     - exists(fun _ => [O][=][O]).
       exists 0.
       split. lia.
-      AX.
+      auto.
     - exists(fun _ => [O][=][O]).
       exists 0.
       split. lia.
-      AX.
+      auto.
     - exists(fun _ => [O][=][O]).
       exists 0.
       split. lia.
-      AX.
+      auto.
     - exists(fun _ => [O][=][O]).
       exists 0.
       split. lia.
-      AX.
+      auto.
     - intros.
       specialize (H T p H0).
       destruct H as [f]. 
@@ -380,7 +378,7 @@ Section deduction_facts2.
     auto.
   Qed.
 
-  Lemma sfT_MP : forall T p q, (T ||- p) -> (sfT T :+ sf p ||- q) -> (sfT T ||- q).
+  Lemma sfT_MP : forall T p q, (T ||- p) -> (sfT T ¦ sf p ||- q) -> (sfT T ||- q).
   Proof.
     intros.
     MP (sf p).
@@ -397,7 +395,7 @@ Section deduction_facts2.
       INTRO.
       GEN.
       GEN.
-      assert(p.['0;('1;fun x => '(4 + x))].('1, '0) = p.['1;('0;fun x => '(S (S x)))]). {
+      assert(p.['0;('1;fun x => '(4 + x))]/('1, '0) = p.['1;('0;fun x => '(S (S x)))]). {
         rewrite <- nested_rew.
         apply rew_rew.
         intros.
@@ -420,7 +418,7 @@ Section deduction_facts2.
         auto.
       }
       rewrite <- H0.
-      AX.
+      auto.
     - intros.
       SPLIT.
       auto.
@@ -441,7 +439,7 @@ Section deduction_facts2.
   Proof.
     intros.
     RAA (t[=]u).
-    SYMMETRY. AX.
+    SYMMETRY. auto.
     WL. auto.
   Qed.
 
@@ -453,6 +451,60 @@ Section deduction_facts2.
     apply pr_NN.
     apply pr_NNPP.
   Qed.
+(**
+  Hypothesis fafa: forall t u, Art u <= 1 -> Art t = 0 -> Art (rewc (t;\0) u) = 0.
+
+
+  Lemma fsfsafa: forall p t, Ar p <= 1 -> Art t = 0 -> Ar p/(t) = 0.
+  Proof.
+    intros.
+    induction (Ar p).
+    - simpl.
+      intros.
+      rewrite fafa.
+      rewrite fafa.
+      simpl. auto.
+      apply Nat.max_lub_r in H. auto.
+      auto.
+      apply Nat.max_lub_l in H. auto.
+      auto.
+    - simpl. auto.
+    - simpl.
+      intros.
+      rewrite fafa.
+      auto. auto. auto.
+    - simpl.
+      intros.
+      rewrite fafa.
+      rewrite fafa.
+      simpl. auto.
+      apply Nat.max_lub_r in H. auto.
+      auto.
+      apply Nat.max_lub_l in H. auto.
+      auto.
+    - simpl.
+      intros.
+      rewrite IHp1.
+      rewrite IHp2.
+      simpl. auto.
+      apply Nat.max_lub_r in H. auto.
+      auto.
+      apply Nat.max_lub_l in H. auto.
+      auto.
+    - simpl.
+      intros.
+      apply IHp.
+      auto. auto.
+    - simpl.
+      intros.
+      unfold sfc. simpl.
+      rewrite
+
+
+      Check .
+    
+  Qed.*)
+  
   
 End deduction_facts2.
 

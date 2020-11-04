@@ -131,15 +131,13 @@ Notation "\0" := (fun x => (var x)) (at level 0).
 Definition sf {L : Lang} (p : LP) : LP := p .[fun x => (var (S x))].
 Definition alt {L : Lang} (p : LP) : LP := p.[fun x => '(pred x)].
 Notation "🠙 t" := (sfc t) (at level 5, right associativity).
-Notation "↑" := sf.
-Notation "↓" := alt.
+Notation "↑ p" := (sf p) (at level 5, right associativity).
+Notation "↓ p" := (alt p) (at level 5, right associativity).
 Definition norm {L : Lang} c p := p .[fun x => c].
-Notation "p .( x )" := (p .[x;\0]) (at level 0).
-Notation "p .( x , y )" := (p .[x; (y; \0)]) (at level 0).
-Notation "p .( x , y , z )" := (p .[x; (y; (z; \0))]) (at level 0).
-Notation "p ..( x )" := (p .[(x.;\0)]) (at level 0).
-Notation "p ..( x , y )" := (p .[(x.;(y.;\0))]) (at level 0).
-Notation "p ..( x , y , z )" := (p .[(x.;(y.;(z.;\0)))]) (at level 0).
+Notation "p /( x )" := (p .[x;\0]) (at level 50).
+Notation "p /( x , y )" := (p .[x; (y; \0)]) (at level 50).
+Notation "p /( x , y , z )" := (p .[x; (y; (z; \0))]) (at level 50).
+Notation "p //( x )" := (p .[(x.;\0)]) (at level 50).
 
 (** ** Syntax Facts *)
 Section basic_facts.
@@ -229,7 +227,7 @@ Section basic_facts.
         auto.
   Qed.
 
-  Lemma neg_sbs : forall p t, (neg p).(t) = neg p.(t).
+  Lemma neg_sbs : forall p t, (neg p)/(t) = neg (p/(t)).
   Proof.
     intros.
     simpl.
@@ -512,7 +510,7 @@ Section rew_facts.
     lia.
   Qed.
 
-  Lemma form3_rw0 : forall p s, Ar p = 3 -> p.(s 0, s 1, s 2) = p .[s].
+  Lemma form3_rw0 : forall p s, Ar p = 3 -> p/(s 0, s 1, s 2) = p .[s].
   Proof.
     intros.
     apply rew_rew.

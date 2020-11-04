@@ -6,8 +6,6 @@ Require Import FOPL.Arithmetic.
 
 Set Implicit Arguments.
 
-Check ([fal]'0[<=]'1[->][0][=][1]).
-
 Fixpoint delta0 (p0 : LP) : bool :=
   match p0 with
   | [~]p   => delta0 p
@@ -17,27 +15,22 @@ Fixpoint delta0 (p0 : LP) : bool :=
   | _ => false
   end.
 
-Fixpoint arithhie (b : bool) (n0 : nat) (p0 : LP) : bool :=
-  if (delta0 p0) then true else
-  match n0 with
-  | S n =>
-    match p0 with
-    | [~]p   => arithhie (negb b) n0 p
-    | [fal]p => 
-      match b with
-      | true  => arithhie false n p
-      | false => false
-      end
-    | _ => false
-    end
+Definition sigma1 (p0 : LP) : bool := delta0 p0 ||
+  match p0 with
+  | [~][fal][~]p => delta0 p
   | _ => false
   end.
 
-Definition pieform n p := arithhie true (2*n) p.
-Definition sigmaform n p := arithhie false (2*n) p.
+Inductive arHie : bool -> nat -> LP -> Prop :=
+| delta0_arh : forall b n p, Is_true(delta0 p) -> arHie b n p
+| sigma_hie  : forall n p, arHie false n p -> arHie true (S n) ([ext]p)
+| pie_hie    : forall n p, arHie true n p -> arHie false (S n) ([fal]p).
+
+Definition stSigma n p := arHie true n p.
+Definition stPie n p := arHie false n p.
 Definition Delta0 p := Ar p = 0 /\ exists q, Ar q = 0 /\ Is_true (delta0 q) /\ (Q ||- p[<->]q).
-Definition Pie n p := Ar p = 0 /\ exists q, Is_true (pieform n q) /\ (Q ||- p[<->]q).
-Definition Sigma n p := Ar p = 0 /\ exists q, Is_true (sigmaform n q) /\ (Q ||- p[<->]q).
+Definition Sigma n p := Ar p = 0 /\ exists q, Ar q = 0 /\ stSigma n q /\ (Q ||- p[<->]q).
+Definition Pie n p := Ar p = 0 /\ exists q, Ar q = 0 /\ stPie n q /\ (Q ||- p[<->]q).
 
 Lemma delta0_rew : forall p s, delta0 p = delta0 p.[s].
 Proof.
@@ -54,36 +47,3 @@ Proof.
   - simpl. auto.
   - simpl. auto.
 Qed.
-
-Fixpoint And (f : nat -> LP) (n0 : nat) :=
-  match n0 with
-  | 0 => f 0
-  | S n => (And f n)[/\](f n0)
-  end.
-
-Lemma bounded_quantifiar : forall n p, Q ||- ([fal]'0[<=][n][->]p)[<->](And (fun x => p.([x])) n).
-Proof.
-  induction n.
-  - intros.
-    simpl.
-    SPLIT.
-    + INTRO.
-      MP (('0[<=][0][->]p).([0])).
-      apply fal_R. 
-      AX.
-      simpl.
-      INTRO.
-      MP ([O][<=][O]).
-      WL. WL.
-      assert([O] = [0]). simpl. reflexivity.
-      rewrite -> H.
-      apply le_compl. lia.
-      AX.
-    + INTRO.
-      GEN.
-      rewrite <- le_replace.
-      unfold sfc.
-      simpl.
-      apply ext_L.
-      apply sf_dsb.
-Abort.

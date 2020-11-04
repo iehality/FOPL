@@ -113,7 +113,8 @@ Proof.
   auto.
 Qed.
 
-Lemma Valn_n : forall n s, Valt N s [n] = n.
+Lemma Valn_n : 
+  forall n s, Valt N s [n] = n.
 Proof.
   induction n.
   simpl. intros. auto.
@@ -123,7 +124,8 @@ Proof.
   auto.
 Qed.
 
-Lemma PA_Soundness : forall p, (PA ||- p) -> (N |= p).
+Lemma PA_Soundness : forall p, 
+  (PA ||- p) -> (N |= p).
 Proof.
   assert (s:=Soundness).
   unfold SValid in s.
@@ -141,7 +143,8 @@ Proof.
   auto.
 Qed.
 
-Lemma Q_Soundness : forall p, (Q ||- p) -> (N |= p).
+Lemma Q_Soundness : forall p, 
+  (Q ||- p) -> (N |= p).
 Proof.
   intros.
   apply PA_Soundness.
@@ -152,7 +155,8 @@ Qed.
 
 Definition id {A : Type} (x : A) := x.
 
-Lemma max_0 : forall n m, max n m = 0 -> (n = 0 /\ m = 0).
+Lemma max_0 : forall n m, 
+  max n m = 0 -> (n = 0 /\ m = 0).
 Proof.
   intros.
   split.
@@ -162,36 +166,153 @@ Proof.
   lia.
 Qed.
 
-Lemma  sfTQQ : sfT Q ≡ Q.
+Lemma le_replace : forall T c d, 
+  (T ||- [fal][fal]'0[<=]'1[<->][ext]'1[+]'0[=]'2) -> 
+  ([ext](sfc c)[+]'0[=](sfc d)) ==(T) (c[<=]d).
 Proof.
-  unfold sfT, eqvT, incT.
-  split.
-  - intros.
-    destruct H.
-    unfold sf in H.
-    destruct H0.
-    simpl in H. rewrite <- H. QAX0.
-    simpl in H. rewrite <- H. QAX0.
-    simpl in H. rewrite <- H. QAX0.
-    simpl in H. rewrite <- H. QAX0.
-    simpl in H. rewrite <- H. QAX0.
-    simpl in H. rewrite <- H. QAX0.
-    simpl in H. rewrite <- H. QAX0.
-    simpl in H. rewrite <- H. QAX0.
-  - intros.
-    unfold sf.
-    destruct H.
-    simpl. split. auto. QAX0.
-    simpl. split. auto. QAX0.
-    simpl. split. auto. QAX0. 
-    simpl. split. auto. QAX0. 
-    simpl. split. auto. QAX0. 
-    simpl. split. auto. QAX0. 
-    simpl. split. auto. QAX0.
-    simpl. split. auto. QAX0.
+  intros.
+  assert(T ||- c[<=]d[<->][ext](sfc c)[+]'0[=](sfc d)).
+  - assert((('0[<=]'1)[<->]([ext]'1[+]'0[=]'2))/(c,d) = (c[<=]d[<->][ext](sfc c)[+]'0[=](sfc d))).
+    simpl.
+    reflexivity.
+    rewrite <- H0.
+    apply fal_R2.
+    auto.
+  - symmetry. auto.
 Qed.
 
-Lemma neq_compl : forall n m, n <> m -> (Q ||- [n][=/=][m]).
+Lemma pred_replace : forall T c,
+  (T ||- [fal][0][=/=][S]'0) ->
+  (T ||- [fal][0][=/=]'0[->][ext]'1[=][S]'0) ->
+  (([ext](sfc c)[=][S]'0) ==(T) ([0][=/=]c)).
+Proof.
+  intros.
+  assert(T ||- [0][=/=]c[<->][ext](sfc c)[=][S]'0).
+  - SPLIT.
+    assert(([0][=/=]'0[->][ext]'1[=][S]'0)/(c) = ([0][=/=]c[->][ext](sfc c)[=][S]'0)).
+    simpl. reflexivity.
+    rewrite <- H1.
+    apply fal_R.
+    auto.
+    MPI ([fal][0][=/=][S]'0). auto.
+    apply ext_L.
+    apply sf_dsb. unfold sf at 1. simpl.
+    assert([0][=/=](sfc c) = sf([O][=/=]c)).
+    unfold sf, sfc. simpl. reflexivity.
+    rewrite <- H1.
+    apply contrad_elim.
+    TRANS ([0][=](sfc c)).
+    INTRO.
+    apply pNNPP. auto.
+    INTRO.
+    MP (([0][=/=][S]'0)/('0)).
+    apply fal_R. auto.
+    simpl.
+    apply contrad_add.
+    INTRO.
+    REW_at_1r.
+    REW_at_2.
+    auto.
+  - symmetry.
+    auto. 
+Qed.
+
+Lemma plus_compl : forall n m, [n][+][m] ==[Q] [n + m].
+Proof.
+  intros.
+  unfoldeq.
+  induction n.
+  + simpl.
+    assert (([0] [+] '0 [=] '0)/([m]) = ([O] [+] [m] [=] [m])).
+    simpl.
+    auto.
+    rewrite <- H.
+    apply fal_R.
+    auto.
+  + simpl.
+    foldeqh IHn.
+    rewrite PLUS0.
+    rewrite IHn.
+    auto.
+Qed.
+
+Lemma mult_compl : forall n m, [n][*][m] ==[Q] [n * m].
+Proof.
+  intros.
+  unfoldeq.
+  induction n.
+  + simpl.
+    assert (([0][*]'0[=][0])/([m]) = ([O][*][m][=][O])).
+    simpl. auto.
+    rewrite <- H.
+    apply fal_R.
+    auto.
+  + simpl.
+    rewrite MULT0.
+    foldeqh IHn.
+    rewrite IHn.
+    assert(m + n*m = n*m + m). lia.
+    rewrite -> H.
+    apply plus_compl.
+Qed.
+
+Lemma le_compl : forall n m, n <= m -> (Q ||- [n][<=][m]).
+Proof.
+  intros.
+  rewrite <- le_replace.
+  unfold sfc.
+  repeat rewrite IN_rewc.
+  EXISTS [m - n].
+  simpl.
+  repeat rewrite IN_rewc.
+  assert (m = n + (m - n)).
+  lia.
+  rewrite H0 at 2.
+  apply plus_compl.
+  auto.
+Qed.
+
+Lemma nat_neq : forall (p : nat -> nat -> Prop), 
+  (forall n m, p n (S n + m)) -> 
+  (forall n m, p (S n + m) n) -> 
+  (forall n m, n <> m -> p n m).
+Proof.
+  intros.
+  apply nat_total_order in H1.
+  destruct H1.
+  - specialize(H n (m - S n)).
+    assert(m=S n + (m - S n)).
+    lia.
+    rewrite H2.
+    auto.
+  - specialize(H0 m (n - S m)).
+    assert(n = S m + (n - S m)).
+    lia.
+    rewrite H2.
+    auto.
+Qed.
+
+Lemma plus_inj : forall c d n, Q ||- [n][+]c[=][n][+]d[->]c[=]d.
+Proof.
+  induction n.
+  - assert(forall x, [0][+]x ==[Q] x).
+    apply PL00.
+    rewrite H.
+    rewrite H.
+    auto.
+  - TRANS ([n][+]c[=][n][+]d).
+    simpl.
+    rewrite PLUS0.
+    rewrite PLUS0.
+    assert(Q ||- [fal][fal][S]'0[=][S]'1[->]'0[=]'1).
+    auto.
+    SPECIALIZE2 H ([n][+]c) ([n][+]d).
+    auto.
+    auto.
+Qed.
+
+Lemma neq_compl : forall n m, 
+  n <> m -> (Q ||- [n][=/=][m]).
 Proof.
   assert(forall n m : nat, Q ||- [n] [=/=] [S n + m]).
   - intros.
@@ -210,7 +331,7 @@ Proof.
     apply plus_inj.
     WL.
     rewrite O0.
-    assert(Q ||- [fal][0][=/=][S]'0). AX. apply NEQ0S.
+    assert(Q ||- [fal][0][=/=][S]'0). auto.
     SPECIALIZE H1 [m].
     auto.
   - apply nat_neq.
@@ -219,7 +340,8 @@ Proof.
     apply neq_symm. auto.
 Qed.
 
-Lemma nle_compl : forall n m, ~ n <= m -> (Q ||- [~][n][<=][m]).
+Lemma nle_compl : forall n m, 
+  ~ n <= m -> (Q ||- [~][n][<=][m]).
 Proof.
   intros.
   assert(m < n). lia.
@@ -235,7 +357,7 @@ Proof.
       apply TInclusion with (T:=Q).
       apply sfTQQ.
       rewrite PLUS0 at 1.
-      assert(Q ||- [fal][0][=/=][S]'0). QAX.
+      assert(Q ||- [fal][0][=/=][S]'0). auto.
       SPECIALIZE H1 ([m0][+]'0).
       apply neq_symm. auto.
     + simpl.
@@ -247,14 +369,15 @@ Proof.
       repeat rewrite IN_rewc in IHn0.
       RAA (([S] [n0 + m0]) [+] '0 [=] [n0]).
       apply deduction_inv.
-      assert(si : Q ||- [fal][fal][S]'0[=][S]'1[->]'0[=]'1). QAX.
+      assert(si : Q ||- [fal][fal][S]'0[=][S]'1[->]'0[=]'1). auto.
       SPECIALIZE2 si (([S][n0 + m0]) [+] '0) ([n0]). auto.
       WL. auto.
-    + QAX.
+    + auto.
   - auto.
 Qed.
 
-Lemma Delta0_term_complete : forall t s, Art t = 0 -> t ==[Q] [Valt N s t].
+Lemma Delta0_term_complete : forall t s, 
+  Art t = 0 -> t ==[Q] [Valt N s t].
 Proof.
   unfold equiv. simpl. unfold preq.
   induction t.
@@ -263,14 +386,14 @@ Proof.
     lia.
   - intros.
     simpl.
-    AX.
+    auto.
   - destruct f.
   - destruct f.
     simpl.
     intros.
     apply (IHt s) in H.
     REWRITE_r H.
-    AX.
+    auto.
   - simpl.
     intros.
     apply max_0 in H. destruct H.
@@ -283,9 +406,14 @@ Proof.
     apply mult_compl.
 Qed.
 
-Lemma Delta0_complete : forall p, Delta0 p -> (N |= p) -> (Q ||- p).
+Lemma Delta0_complete : forall p, 
+  Delta0 p -> (N |= p) -> (Q ||- p).
 Proof.
-  assert(forall p s, Ar p = 0 -> Is_true (delta0 p) -> (Valp N s p -> (Q ||- p)) /\ (~ Valp N s p -> (Q ||- [~]p))).
+  assert(
+    forall p s, Ar p = 0 -> 
+    Is_true (delta0 p) -> 
+    (Valp N s p -> (Q ||- p)) /\ (~ Valp N s p -> (Q ||- [~]p))
+  ).
   - unfold models, Delta0.
     intros.
     induction p.
@@ -298,7 +426,7 @@ Proof.
         rewrite (Delta0_term_complete _ s).
         rewrite (Delta0_term_complete l0 s).
         rewrite H2.
-        AX.
+        auto.
         auto. auto.
       * simpl.
         intros.
@@ -339,11 +467,11 @@ Proof.
         apply IHp1.
         auto. auto. auto.
         INTRO. INTRO.
-        apply explosion0 with (p:=p1). AX. AX.
+        apply explosion0 with (p:=p1). auto. auto.
         MP p2.
         apply IHp2.
         auto. auto. auto.
-        AX.
+        auto.
       * intros.
         apply nimp_andn in H3.
         destruct H3.
@@ -387,7 +515,8 @@ Proof.
     auto.
 Qed.
 
-Lemma Sigma1_val : forall p, Ar p = 1 -> (N |= [ext]p) -> exists n, N |= p.([n]).
+Lemma Sigma1_val : forall p, 
+  Ar p <= 1 -> (N |= [ext]p) -> exists n, N |= p/([n]).
 Proof.
   unfold models.
   intros.
@@ -406,8 +535,41 @@ Proof.
   auto.
 Qed.
 
-Lemma Sigma0_complete : forall p, Sigma 1 p -> (N |= p) -> (Q ||- p).
+Lemma Sigma1_complete : 
+  forall p, Sigma 1 p -> (N |= p) -> (Q ||- p).
 Proof.
+  unfold Sigma, stSigma.
+  intros.
+  destruct H.
+  destruct H1 as [q].
+  destruct H1.
+  destruct H2.
+  DESTRUCT H3.
+  assert(N |= q). {
+    assert(S:=Q_Soundness(p[->]q) H3).
+    unfold models.
+    intros.
+    unfold models in S. simpl in S.
+    auto.
+  }
+  MP q.
+  inversion H2.
+  - apply Delta0_complete.
+    unfold Delta0.
+    split. auto.
+    exists q. split. auto. split. auto. SPLIT. auto. auto. auto.
+  - rewrite <- H9 in H5.
+    rewrite <- H9 in H1. simpl in H1.
+    apply Sigma1_val in H5.
+    destruct H5 as [m].
+    EXISTS [m].
+    apply Delta0_complete.
+    unfold Delta0.
+    split. simpl.
+  destruct(arHie true 1 q) eqn:sS.
+  induction sS.
+  inversion sS. sS.
+  destruct sS.
 
 
 
