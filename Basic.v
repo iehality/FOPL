@@ -9,7 +9,7 @@ Definition theory {L : Lang} (T : Th) := fun p => T ||- p.
 Definition uniT {L : Lang} (T U : Th) := fun x => T x \/ U x.
 Notation "T :\/ U" := (uniT T U) (at level 71, left associativity).
 
-Definition Null {L : Lang} : Th := fun _ => False.
+Inductive Null {L : Lang} : Th :=.
 Definition null {L : Lang} (T : Th) := forall p, ~ T p.
 
 Fixpoint Fal {L : Lang} n0 p :=
@@ -23,24 +23,23 @@ Section deduction_facts2.
 
   Lemma nullNull : null Null.
   Proof.
-    unfold null, Null.
-    auto.
+    unfold null.
+    intros. intro.
+    destruct H.
   Qed.
 
   Lemma nullT_nullsfT : forall T, null (sfT T) <-> null T.
   Proof.
-    unfold null, sfT.
+    unfold null.
     intros.
     split.
     intros.
     specialize(H (sf p)).
     contradict H.
-    rewrite alt_sf.
     auto.
     intros. intro.
     destruct H0.
-    destruct H0.
-    specialize (H (alt p)).
+    specialize (H p).
     contradiction.
   Qed.
 
@@ -138,11 +137,12 @@ Section deduction_facts2.
     - simpl.
       intros.
       destruct H.
-      apply IHn in H.
-      destruct H as [n0].
-      destruct H.
+      exists n.
+      auto.
+      specialize (IHn q H).
+      destruct IHn as [n0].
+      destruct H0.
       exists n0. auto.
-      exists n. auto.
   Qed. 
 
   Lemma Sump_inv : forall f n m, m < n -> Sum f n (f m).
@@ -166,7 +166,7 @@ Section deduction_facts2.
     induction n.
     - simpl. intros.
       apply TInclusion with (T:=Null).
-      unfold incT, Null, sfT.
+      unfold incT.
       intros. 
       contradiction.
       apply Null_psfp.
@@ -252,15 +252,14 @@ Section deduction_facts2.
     induction H.
     - destruct IHprovable as [f]. 
       destruct H0 as [n].
-      destruct H0.
-      unfold sfT in H0.
+      destruct H0.   
       exists (fun n => alt (f n)).
       exists n.
       split.
       intros.
-      specialize (H0 m).
+      specialize (H0 m H2).
       destruct H0.
-      auto.
+      rewrite alt_sf.
       auto.
       GEN.
       apply sfTSum.
@@ -271,8 +270,13 @@ Section deduction_facts2.
         destruct H2.
         pose (s := fun x => sf (alt (f x))).
         fold s.
-        assert(s m = f m).
-        apply H0. auto.
+        assert(s m = f m). {
+          specialize(H0 m H2).
+          unfold s.
+          destruct H0.
+          rewrite alt_sf.
+          auto.
+        }
         rewrite H3.
         rewrite <- H4.
         apply Sump_inv. auto.
@@ -359,7 +363,7 @@ Section deduction_facts2.
 
   Lemma sfT_inc : forall T U, (T ⊆ U) -> (sfT T ⊆ sfT U).
   Proof.
-    unfold sfT, incT.
+    unfold incT.
     intros.
     destruct H0.
     auto.

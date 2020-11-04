@@ -38,9 +38,12 @@ Proof.
   simpl.
   rewrite rew_id.
   auto.
-Qed. 
+Qed.
   
-Definition sfT {L : Lang} (T : Th) := fun p => sf (alt p) = p /\ T (alt p).
+Inductive sfT {L : Lang} (T : Th) : Th := 
+| sfT_intro : forall p, T p -> sfT T (sf p).
+Hint Constructors sfT : core.
+
 Notation "⇑ T" := (sfT T) (at level 20).
 
 Inductive provable {L : Lang} (T : Th) : LP -> Prop :=
@@ -56,15 +59,15 @@ Inductive provable {L : Lang} (T : Th) : LP -> Prop :=
   | Eq0  : forall t, provable T (t [=] t)
   | Eq1  : forall p t u, provable T (t [=] u [->] p/(t) [->] p/(u)).
 
-  Hint Resolve Pr1 Pr2 Pr3 Qt0 Qt1 Qt2 Eq0 Eq1 Pr0 : core.
+Hint Resolve Pr1 Pr2 Pr3 Qt0 Qt1 Qt2 Eq0 Eq1 Pr0 : core.
 
 Notation "T ||- p" := (provable T p) (at level 70).
 
 Definition Consis {L : Lang} (T : Th) := ~ exists p, (T ||- p) /\ (T ||- [~]p).
 
 Inductive addT {L : Lang} (T : Th) (p : LP) : Th :=
-| appdom : forall q, T q -> addT T p q
-| appnew : addT T p p.
+| appnew : addT T p p
+| appdom : forall q, T q -> addT T p q.
 
 Hint Constructors addT : core.
 
@@ -141,7 +144,6 @@ Section deduction_facts.
       + intros.
         apply GEN.
         apply IHprovable.
-        unfold sfT.
         intros.
         destruct H1.
         auto.
@@ -183,15 +185,15 @@ Section deduction_facts.
         MP (fal (sf p [->] q)).
         GEN.
         apply TInclusion with (T := elmT (sfT T) (sf p)).
-        unfold sfT. unfold elmT. unfold incT.
+        unfold elmT. unfold incT.
         intros.
         destruct H0.
         destruct H0.
-        split. auto.
+        apply sfT_intro.
         split. auto.
         contradict H1.
-        rewrite <- H1.
-        symmetry. auto.
+        rewrite H1.
+        auto.
         auto.
         auto.
       + intros.
@@ -201,7 +203,7 @@ Section deduction_facts.
       + intros.
         assert (em := classic (p0 = p)).
         destruct em.
-        * rewrite <- H0.
+        * rewrite H0.
           auto.
         * apply imp_pr.
           apply Pr0.
@@ -250,30 +252,27 @@ Section deduction_facts.
         intros. 
         destruct H2.
         destruct H2.
-        auto.
         contradiction.
+        auto.
         auto.
   Qed.
   
   Ltac INTRO := apply Deduction.
   
-  Lemma sf_dsb0 : forall T p, (sfT T¦ sf p) ⊆ (sfT (T¦ p)).
+  Lemma sf_dsb0 : forall T p, (sfT T¦ sf p) ⊆ (sfT (T ¦ p)).
   Proof.
     intros.
-    unfold sfT. unfold incT.
+    unfold incT.
     intros.
     destruct H.
-    destruct H.
-    split. auto.
     auto.
-    rewrite alt_sf.
-    split. auto.
+    destruct H.
     auto.
   Qed.
   
-  Lemma sf_dsb1 : forall T U p, T ⊆ U -> (T¦ p) ⊆ (U¦ p).
+  Lemma sf_dsb1 : forall T U p, T ⊆ U -> (T ¦ p) ⊆ (U¦ p).
   Proof.
-    unfold sfT. unfold incT.
+    unfold incT.
     intros.
     destruct H0.
     auto.
