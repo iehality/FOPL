@@ -249,7 +249,7 @@ Section Semantics.
 
   Lemma lp_iff0 : forall M p s0 s1 u, 
     (forall n, s0 n == Valt M s1 (u n)) -> 
-    Valp M s0 p <-> Valp M s1 p.[u].
+    Valp M s0 p <-> Valp M s1 (p.[u]).
   Proof.
     intros M.
     induction p.
@@ -289,7 +289,7 @@ Section Semantics.
       auto.
     - simpl.
       intros.
-      assert (miff : forall t, Valp M (t; s0) p <-> Valp M (t; s1) p.['0; fun x => sfc (u x)]).
+      assert (miff : forall t, Valp M (t; s0) p <-> Valp M (t; s1) (p.['0; fun x => sfc (u x)])).
       + intros.
         apply IHp.
         destruct n.
@@ -303,7 +303,7 @@ Section Semantics.
   Qed.
 
   Lemma lp_iff1 : forall M p s u, 
-    Valp M (fun n => Valt M s (u n)) p <-> Valp M s p.[u].
+    Valp M (fun n => Valt M s (u n)) p <-> Valp M s (p.[u]).
   Proof.
     intros.
     apply lp_iff0.

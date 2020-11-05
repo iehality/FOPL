@@ -25,6 +25,14 @@ Fixpoint innerNat (n0 : nat) : Term :=
 
 Notation "[ n ]" := (innerNat n) (at level 0).
 
+Lemma IN_constant : forall n, Art [n] = 0.
+Proof.
+  induction n.
+  simpl. auto.
+  simpl.
+  auto.
+Qed.
+
 Lemma IN_rewc : forall n s, rewc s [n] = [n].
 Proof.
   intros.

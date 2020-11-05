@@ -599,8 +599,8 @@ Section rew_facts.
       lia.
   Qed.
 
-  Lemma Ar_rew_of : forall p t, 
-    Ar p = 1 -> Art t = 0 -> Ar (p/(t)) = 0.
+  Lemma of_constant : forall p t, 
+    Ar p <= 1 -> Art t = 0 -> Ar (p/(t)) = 0.
   Proof.
     intros.
     assert(Ar (p/(t)) <= 0).

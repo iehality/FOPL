@@ -32,7 +32,7 @@ Definition Delta0 p := Ar p = 0 /\ exists q, Ar q = 0 /\ Is_true (delta0 q) /\ (
 Definition Sigma n p := Ar p = 0 /\ exists q, Ar q = 0 /\ stSigma n q /\ (Q ||- p[<->]q).
 Definition Pie n p := Ar p = 0 /\ exists q, Ar q = 0 /\ stPie n q /\ (Q ||- p[<->]q).
 
-Lemma delta0_rew : forall p s, delta0 p = delta0 p.[s].
+Lemma delta0_rew : forall p s, delta0 (p.[s]) = delta0 p.
 Proof.
   induction p.
   - simpl. auto.
@@ -41,8 +41,8 @@ Proof.
   - simpl. auto.
   - simpl.
     intros.
-    rewrite <- IHp1.
-    rewrite <- IHp2.
+    rewrite IHp1.
+    rewrite IHp2.
     reflexivity.
   - simpl. auto.
   - simpl. auto.

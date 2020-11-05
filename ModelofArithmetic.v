@@ -406,8 +406,8 @@ Proof.
     apply mult_compl.
 Qed.
 
-Lemma Delta0_complete : forall p, 
-  Delta0 p -> (N |= p) -> (Q ||- p).
+Lemma delta0_complete : forall p, 
+  Ar p = 0 -> Is_true(delta0 p) -> (N |= p) -> (Q ||- p).
 Proof.
   assert(
     forall p s, Ar p = 0 -> 
@@ -482,7 +482,7 @@ Proof.
         apply IHp2.
         auto. auto. auto.
         unfold andl in H5.
-        rewrite (TNNPP _ _ p2).
+        rewrite (DNE _ _ p2).
         auto.
     + simpl in H.
       simpl in H0.
@@ -499,20 +499,29 @@ Proof.
       simpl in H0.
       contradiction.
   - intros.
-    destruct H0.
-    destruct H2 as [q].
-    destruct H2.
-    destruct H3.
-    fdestruct H4.
-    MP q.
     apply H with (s:=id).
-    auto.
-    auto.
-    assert(N |= p [->] q).
-    apply Q_Soundness. auto.
-    apply H6.
-    apply H1.
-    auto.
+    auto. auto. auto.
+Qed.
+
+Lemma Delta0_complete : forall p, 
+  Delta0 p -> (N |= p) -> (Q ||- p).
+Proof.
+  intros.
+  destruct H.
+  destruct H1 as [q].
+  destruct H1.
+  destruct H2.
+  fdestruct H3.
+  MP q.
+  apply delta0_complete.
+  auto.
+  auto.
+  assert(N |= p [->] q).
+  apply Q_Soundness. auto.
+  unfold models. intros.
+  apply H5.
+  apply H0.
+  auto.
 Qed.
 
 Lemma Sigma1_val : forall p, 
@@ -535,41 +544,47 @@ Proof.
   auto.
 Qed.
 
-Lemma Sigma1_complete : 
-  forall p, Sigma 1 p -> (N |= p) -> (Q ||- p).
+Lemma sigma1_complete : forall p,
+  Ar p = 0 -> stSigma 1 p -> (N |= p) -> (Q ||- p).
 Proof.
-  unfold Sigma, stSigma.
+  intros.
+  inversion H0.
+  - apply delta0_complete.
+    auto. auto. auto.
+  - rewrite <- H5 in H.
+    rewrite <- H5 in H1.
+    simpl in H.
+    apply Sigma1_val in H1.
+    destruct H1 as [m].
+    fexists [m].
+    apply delta0_complete.
+    apply of_constant. lia.
+    apply IN_constant.
+    inversion H3.
+    rewrite delta0_rew.
+    auto. auto. lia.
+Qed.
+
+Lemma Sigma1_complete : forall p,
+  Sigma 1 p -> (N |= p) -> (Q ||- p).
+Proof.
   intros.
   destruct H.
   destruct H1 as [q].
   destruct H1.
   destruct H2.
   fdestruct H3.
-  assert(N |= q). {
-    assert(S:=Q_Soundness(p[->]q) H3).
-    unfold models.
-    intros.
-    unfold models in S. simpl in S.
-    auto.
-  }
   MP q.
-  inversion H2.
-  - apply Delta0_complete.
-    unfold Delta0.
-    split. auto.
-    exists q. split. auto. split. auto. fsplit. auto. auto. auto.
-  - rewrite <- H9 in H5.
-    rewrite <- H9 in H1. simpl in H1.
-    apply Sigma1_val in H5.
-    destruct H5 as [m].
-    fexists [m].
-    apply Delta0_complete.
-    unfold Delta0.
-    split. simpl.
-  destruct(arHie true 1 q) eqn:sS.
-  induction sS.
-  inversion sS. sS.
-  destruct sS.
+  apply sigma1_complete.
+  auto.
+  auto.
+  assert(N |= p [->] q).
+  apply Q_Soundness. auto.
+  unfold models. intros.
+  apply H5.
+  apply H0.
+  auto.
+Qed.
 
 
 
