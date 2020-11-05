@@ -17,7 +17,7 @@ Notation "a [*] b" := (@Fc2 L mlA a b) (at level 44, right associativity).
 Notation "a [<=] b" := (@Pd2 L lelA a b) (at level 60, right associativity).
 Notation "[S] a" := (@Fc1 L ScA a) (at level 43, right associativity).
 
-Fixpoint innerNat (n0 : nat) : LC := 
+Fixpoint innerNat (n0 : nat) : Term := 
   match n0 with
   | 0 => [O]
   | S n => [S] (innerNat n)
@@ -55,7 +55,7 @@ Hint Constructors Q : core.
 
 Inductive PA : Th :=
   | PA_Q  : forall p, Q p -> PA p
-  | IND   : forall p, PA (p/([0]) [->] ([fal] p [->] p./([S] '0)) [->] [fal] p).
+  | IND   : forall p, PA (p/([0]) [->] ([fal] p [->] p//([S] '0)) [->] [fal] p).
 Hint Constructors PA : core.
 
 Lemma PL00 : forall c, [0][+]c ==[Q] c.
@@ -93,29 +93,55 @@ Qed.
 
 Lemma  sfTQQ : sfT Q ≡ Q.
 Proof.
-  unfold sfT, eqvT, incT.
+  unfold eqvT, incT.
   split.
   - intros.
     destruct H.
-    unfold sf in H.
-    destruct H0.
-    simpl in H. rewrite <- H. auto.
-    simpl in H. rewrite <- H. auto.
-    simpl in H. rewrite <- H. auto.
-    simpl in H. rewrite <- H. auto.
-    simpl in H. rewrite <- H. auto.
-    simpl in H. rewrite <- H. auto.
-    simpl in H. rewrite <- H. auto.
-    simpl in H. rewrite <- H. auto.
-  - intros.
     unfold sf.
     destruct H.
-    simpl. split. auto. auto.
-    simpl. split. auto. auto.
-    simpl. split. auto. auto. 
-    simpl. split. auto. auto. 
-    simpl. split. auto. auto. 
-    simpl. split. auto. auto. 
-    simpl. split. auto. auto.
-    simpl. split. auto. auto.
+    simpl. auto.
+    simpl. auto.
+    simpl. auto.
+    simpl. auto.
+    simpl. auto.
+    simpl. auto.
+    simpl. auto.
+    simpl. auto.
+  - intros.
+    assert(p = sf p). unfold sf.
+    destruct H.
+    simpl. auto.
+    simpl. unfold sfc. simpl. auto.
+    simpl. unfold sfc. simpl. auto.
+    simpl. unfold sfc. simpl. auto.
+    simpl. unfold sfc. simpl. auto.
+    simpl. unfold sfc. simpl. auto.
+    simpl. unfold sfc. simpl. auto.
+    simpl. unfold sfc. simpl. auto.
+    rewrite H0.
+    auto.
 Qed.
+
+Ltac rewrite_formula x y :=
+  let H := fresh "H" in
+  let n0 := fresh "n" in
+  assert(x = y);
+  [unfold sf, sfc;
+  try rewrite nested_rew;
+  try rewrite nested_rewc;
+  apply rew_rew;
+  intros;
+  repeat (lia || (destruct n0; simpl; [auto || apply IN_rewc| ])) |
+  rewrite H; clear H].
+
+Ltac rewrite_formula_in H0 x y :=
+  let H := fresh "H" in
+  let n0 := fresh "n" in
+  assert(x = y);
+  [unfold sf, sfc;
+  try rewrite nested_rew;
+  try rewrite nested_rewc;
+  apply rew_rew;
+  intros;
+  repeat (lia || (destruct n0; simpl; [auto || apply IN_rewc| ])) |
+  rewrite H in H0; clear H].

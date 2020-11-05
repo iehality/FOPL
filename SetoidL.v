@@ -2,8 +2,8 @@ Require Export SetoidClass.
 Require Import FOPL.FOPL.
 Require Import FOPL.Deduction.
 
-Definition preq {L :Lang} (T :Th) (c d :LC) := T ||- c[=]d.
-Definition priff {L :Lang} (T :Th) (p q :LP) := T ||- p[<->]q.
+Definition preq {L :Lang} (T :Th) (c d :Term) := T ||- c[=]d.
+Definition priff {L :Lang} (T :Th) (p q :Formula) := T ||- p[<->]q.
 
 Lemma priff_Equiv : forall (L :Lang) T, Equivalence (priff T).
 Proof.
@@ -12,23 +12,23 @@ Proof.
   split.
   - unfold Reflexive.
     intros.
-    SPLIT.
+    fsplit.
     auto. auto.
   - unfold Symmetric.
     intros.
-    DESTRUCT H.
-    SPLIT.
+    fdestruct H.
+    fsplit.
     auto. auto.
   - unfold Transitive.
     intros.
-    DESTRUCT H.
-    DESTRUCT H0.
-    SPLIT.
-    TRANS y. auto. auto.
-    TRANS y. auto. auto.
+    fdestruct H.
+    fdestruct H0.
+    fsplit.
+    ftrans y. auto. auto.
+    ftrans y. auto. auto.
 Qed.
 
-Program Instance Setoid_LC {L :Lang} (T : Th) : Setoid LC := {|equiv:=preq T|}.
+Program Instance Setoid_Term {L :Lang} (T : Th) : Setoid Term := {|equiv:=preq T|}.
 Next Obligation.
 Proof.
   unfold preq.
@@ -39,12 +39,12 @@ Proof.
     auto.
   - unfold Symmetric.
     intros.
-    SYMMETRY.
+    fsymmetry.
     auto.
   - unfold Transitive.
     apply eql_trans.
 Qed.
-Notation "p ==[ T ] q" := ((@equiv _ (Setoid_LC T)) p q) (at level 55).
+Notation "p ==[ T ] q" := ((@equiv _ (Setoid_Term T)) p q) (at level 55).
 
 Lemma preq0 : forall {L : Lang} T c d, (T ||- c[=]d) <-> (c ==[T] d).
 Proof.
@@ -52,7 +52,7 @@ Proof.
   reflexivity.
 Qed.
 
-Program Instance Setoid_LP {L :Lang} (T : Th) : Setoid LP := {|equiv:=priff T|}.
+Program Instance Setoid_Formula {L :Lang} (T : Th) : Setoid Formula := {|equiv:=priff T|}.
 Next Obligation.
 Proof.
   unfold priff.
@@ -60,22 +60,22 @@ Proof.
   split.
   - unfold Reflexive.
     intros.
-    SPLIT.
+    fsplit.
     auto. auto.
   - unfold Symmetric.
     intros.
-    DESTRUCT H.
-    SPLIT.
+    fdestruct H.
+    fsplit.
     auto. auto.
   - unfold Transitive.
     intros.
-    DESTRUCT H.
-    DESTRUCT H0.
-    SPLIT.
-    TRANS y. auto. auto.
-    TRANS y. auto. auto.
+    fdestruct H.
+    fdestruct H0.
+    fsplit.
+    ftrans y. auto. auto.
+    ftrans y. auto. auto.
 Qed.
-Notation "p ==( T ) q" := ((@equiv _ (Setoid_LP T)) p q) (at level 55).
+Notation "p ==( T ) q" := ((@equiv _ (Setoid_Formula T)) p q) (at level 55).
 
 Lemma priff0 : forall {L : Lang} T p q, (T ||- p[<->]q) <-> (p ==(T) q).
 Proof.
@@ -83,8 +83,8 @@ Proof.
   reflexivity.
 Qed.
 
-Instance rew_LC_Fc1 : forall {L : Lang} (T : @Th L) c, 
-  Proper ((@equiv _ (Setoid_LC T)) ==> (@equiv _ (Setoid_LC T))) (Fc1 c).
+Instance rew_Term_Fc1 : forall {L : Lang} (T : @Th L) c, 
+  Proper ((@equiv _ (Setoid_Term T)) ==> (@equiv _ (Setoid_Term T))) (Fc1 c).
 Proof.
   unfold Proper, respectful, equiv. 
   simpl.
@@ -98,8 +98,8 @@ Proof.
   auto.
 Qed.
 
-Instance rew_LC_Fc2 : forall {L : Lang} T c, 
-  Proper ((@equiv _ (Setoid_LC T)) ==> (@equiv _ (Setoid_LC T)) ==> (@equiv _ (Setoid_LC T))) (Fc2 c).
+Instance rew_Term_Fc2 : forall {L : Lang} T c, 
+  Proper ((@equiv _ (Setoid_Term T)) ==> (@equiv _ (Setoid_Term T)) ==> (@equiv _ (Setoid_Term T))) (Fc2 c).
 Proof.
   unfold Proper, respectful, equiv. 
   simpl.
@@ -120,8 +120,8 @@ Proof.
     auto.
 Qed.
 
-Instance rew_LP_Eq : forall {L : Lang} T, 
-  Proper ((@equiv _ (Setoid_LC T)) ==> (@equiv _ (Setoid_LC T)) ==> (@equiv _ (Setoid_LP T))) eql.
+Instance rew_Formula_Eq : forall {L : Lang} T, 
+  Proper ((@equiv _ (Setoid_Term T)) ==> (@equiv _ (Setoid_Term T)) ==> (@equiv _ (Setoid_Formula T))) eql.
 Proof.
   unfold Proper, respectful, equiv. 
   simpl.
@@ -131,8 +131,8 @@ Proof.
   intros. simpl. repeat rewrite <- rewc_sfc. auto.
   assert (forall z v, ((sfc z)[=]'0)/(v) = z[=]v).
   intros. simpl. repeat rewrite <- rewc_sfc. auto.  
-  SPLIT.
-  - TRANS (y[=]x0).
+  fsplit.
+  - ftrans (y[=]x0).
     rewrite <- H1.
     rewrite <- (H1 y).
     MP (x[=]y). auto.
@@ -141,32 +141,32 @@ Proof.
     rewrite <- (H2 y).
     MP (x0[=]y0). auto.
     auto.
-  - TRANS (x[=]y0).
+  - ftrans (x[=]y0).
     rewrite <- H1.
     rewrite <- (H1 x).
     MP (y[=]x).
-    SYMMETRY. auto.
+    fsymmetry. auto.
     auto.
     rewrite <- H2.
     rewrite <- (H2 x).
     MP (y0[=]x0).
-    SYMMETRY. auto.
+    fsymmetry. auto.
     auto.
 Qed.
 
-Instance rew_LP_Pd0 : forall {L : Lang} T c, 
-  Proper ((@equiv _ (Setoid_LP T))) (Pd0 c).
+Instance rew_Formula_Pd0 : forall {L : Lang} T c, 
+  Proper ((@equiv _ (Setoid_Formula T))) (Pd0 c).
 Proof.
   unfold Proper, respectful, equiv. 
   simpl.
   unfold preq, priff.
   intros.
-  SPLIT.
+  fsplit.
   auto. auto.
 Qed.
 
-Instance rew_LP_Pd1 : forall {L : Lang} T c, 
-  Proper ((@equiv _ (Setoid_LC T)) ==> (@equiv _ (Setoid_LP T))) (Pd1 c).
+Instance rew_Formula_Pd1 : forall {L : Lang} T c, 
+  Proper ((@equiv _ (Setoid_Term T)) ==> (@equiv _ (Setoid_Formula T))) (Pd1 c).
 Proof.
   unfold Proper, respectful, equiv. 
   simpl.
@@ -174,7 +174,7 @@ Proof.
   intros.
   assert (forall z, (Pd1 c '0)/(z) = Pd1 c z).
   intros. simpl. auto.
-  SPLIT.
+  fsplit.
   rewrite <- H0.
   rewrite <- (H0 y).
   MP (x[=]y). auto.
@@ -182,12 +182,12 @@ Proof.
   rewrite <- H0.
   rewrite <- (H0 x).
   MP (y[=]x).
-  SYMMETRY. auto.
+  fsymmetry. auto.
   auto.
 Qed.
 
-Instance rew_LP_Pd2 : forall {L : Lang} T c, 
-  Proper ((@equiv _ (Setoid_LC T)) ==> (@equiv _ (Setoid_LC T)) ==> (@equiv _ (Setoid_LP T))) (Pd2 c).
+Instance rew_Formula_Pd2 : forall {L : Lang} T c, 
+  Proper ((@equiv _ (Setoid_Term T)) ==> (@equiv _ (Setoid_Term T)) ==> (@equiv _ (Setoid_Formula T))) (Pd2 c).
 Proof.
   unfold Proper, respectful, equiv. 
   simpl.
@@ -197,8 +197,8 @@ Proof.
   intros. simpl. repeat rewrite <- rewc_sfc. auto.
   assert (forall z v, (Pd2 c (sfc z) '0)/(v) = Pd2 c z v).
   intros. simpl. repeat rewrite <- rewc_sfc. auto.  
-  SPLIT.
-  - TRANS (Pd2 c y x0).
+  fsplit.
+  - ftrans (Pd2 c y x0).
     rewrite <- H1.
     rewrite <- (H1 y).
     MP (x[=]y). auto.
@@ -207,158 +207,158 @@ Proof.
     rewrite <- (H2 y).
     MP (x0[=]y0). auto.
     auto.
-  - TRANS (Pd2 c x y0).
+  - ftrans (Pd2 c x y0).
     rewrite <- H1.
     rewrite <- (H1 x).
     MP (y[=]x).
-    SYMMETRY. auto.
+    fsymmetry. auto.
     auto.
     rewrite <- H2.
     rewrite <- (H2 x).
     MP (y0[=]x0).
-    SYMMETRY. auto.
+    fsymmetry. auto.
     auto.
 Qed.
 
-Instance rew_LP_imp : forall {L : Lang} T, 
-  Proper ((@equiv _ (Setoid_LP T)) ==> (@equiv _ (Setoid_LP T)) ==> (@equiv _ (Setoid_LP T))) imp.
+Instance rew_Formula_imp : forall {L : Lang} T, 
+  Proper ((@equiv _ (Setoid_Formula T)) ==> (@equiv _ (Setoid_Formula T)) ==> (@equiv _ (Setoid_Formula T))) imp.
 Proof.
   unfold Proper, respectful, equiv. 
   simpl.
   unfold preq, priff.
   intros.
-  DESTRUCT H.
-  DESTRUCT H0.
-  SPLIT.
-  - repeat INTRO.
+  fdestruct H.
+  fdestruct H0.
+  fsplit.
+  - fintros.
     MP x0.
     MP x.
     MP y.
     auto.
-    repeat WL. auto.
+    WLs. auto.
     auto.
-    repeat WL.
+    WLs.
     auto.
-  - repeat INTRO.
+  - fintros.
     MP y0.
     MP y.
     MP x.
     auto.
-    repeat WL. auto.
+    WLs. auto.
     auto.
-    repeat WL. auto.
+    WLs. auto.
 Qed.
 
-Instance rew_LP_neg : forall {L : Lang} T, 
-  Proper ((@equiv _ (Setoid_LP T)) ==> (@equiv _ (Setoid_LP T))) neg.
+Instance rew_Formula_neg : forall {L : Lang} T, 
+  Proper ((@equiv _ (Setoid_Formula T)) ==> (@equiv _ (Setoid_Formula T))) neg.
 Proof.
   unfold Proper, respectful, equiv. 
   simpl.
   unfold preq, priff.
   intros.
-  DESTRUCT H.
-  SPLIT.
+  fdestruct H.
+  fsplit.
   - apply contrad_add. auto.
   - apply contrad_add. auto.
 Qed.
 
-Instance rew_LP_andl : forall {L : Lang} T, 
-  Proper ((@equiv _ (Setoid_LP T)) ==> (@equiv _ (Setoid_LP T)) ==> (@equiv _ (Setoid_LP T))) andl.
+Instance rew_Formula_andl : forall {L : Lang} T, 
+  Proper ((@equiv _ (Setoid_Formula T)) ==> (@equiv _ (Setoid_Formula T)) ==> (@equiv _ (Setoid_Formula T))) andl.
 Proof.
   unfold Proper, respectful, equiv. 
   simpl.
   unfold preq, priff.
   intros.
-  DESTRUCT H.
-  DESTRUCT H0.
-  SPLIT.
-  - repeat INTRO.
+  fdestruct H.
+  fdestruct H0.
+  fsplit.
+  - fintros.
     assert(T ¦ x[/\]x0 ||- x[/\]x0). auto.
-    DESTRUCT H3.
-    SPLIT.
+    fdestruct H3.
+    fsplit.
     MP x. auto.
     WL. auto.
     MP x0. auto.
     WL. auto.
-  - repeat INTRO.
+  - fintros.
     assert(T ¦ y[/\]y0 ||- y[/\]y0). auto.
-    DESTRUCT H3.
-    SPLIT.
+    fdestruct H3.
+    fsplit.
     MP y. auto.
     WL. auto.
     MP y0. auto.
     WL. auto.
 Qed.
 
-Instance rew_LP_orl : forall {L : Lang} T, 
-  Proper ((@equiv _ (Setoid_LP T)) ==> (@equiv _ (Setoid_LP T)) ==> (@equiv _ (Setoid_LP T))) orl.
+Instance rew_Formula_orl : forall {L : Lang} T, 
+  Proper ((@equiv _ (Setoid_Formula T)) ==> (@equiv _ (Setoid_Formula T)) ==> (@equiv _ (Setoid_Formula T))) orl.
 Proof.
   unfold Proper, respectful, equiv. 
   simpl.
   unfold preq, priff.
   intros.
-  DESTRUCT H.
-  DESTRUCT H0.
+  fdestruct H.
+  fdestruct H0.
   unfold orl.
-  SPLIT.
-  - repeat INTRO.
+  fsplit.
+  - fintros.
     MP x0.
     MP ([~]x).
     apply deduction_inv.
     apply contrad_add.
     WL. auto.
     auto.
-    repeat WL. auto.
-  - repeat INTRO.
+    WLs. auto.
+  - fintros.
     MP y0.
     MP ([~]y).
     apply deduction_inv.
     apply contrad_add.
     WL. auto.
     auto.
-    repeat WL. auto.
+    WLs. auto.
 Qed.
 
-Instance rew_LP_iffl : forall {L : Lang} T, 
-  Proper ((@equiv _ (Setoid_LP T)) ==> (@equiv _ (Setoid_LP T)) ==> (@equiv _ (Setoid_LP T))) iffl.
+Instance rew_Formula_iffl : forall {L : Lang} T, 
+  Proper ((@equiv _ (Setoid_Formula T)) ==> (@equiv _ (Setoid_Formula T)) ==> (@equiv _ (Setoid_Formula T))) iffl.
 Proof.
   unfold Proper, respectful, equiv. 
   simpl.
   unfold preq, priff.
   intros.
-  DESTRUCT H.
-  DESTRUCT H0.
-  SPLIT.
-  - repeat INTRO.
+  fdestruct H.
+  fdestruct H0.
+  fsplit.
+  - fintros.
     assert(T ¦ (x [<->] x0) ||- x[<->]x0). auto.
-    DESTRUCT H3.
-    SPLIT.
-    INTRO.
+    fdestruct H3.
+    fsplit.
+    fintro.
     MP x0.
     MP x.
     MP y. auto.
     WL. WL. auto.
     WL. auto.
     WL. WL. auto.
-    INTRO.
+    fintro.
     MP x.
     MP x0.
     MP y0. auto.
     WL. WL. auto.
     WL. auto.
     WL. WL. auto.
-  - repeat INTRO.
+  - fintros.
     assert(T ¦ (y [<->] y0) ||- y[<->]y0). auto.
-    DESTRUCT H3.
-    SPLIT.
-    INTRO.
+    fdestruct H3.
+    fsplit.
+    fintro.
     MP y0.
     MP y.
     MP x. auto.
     WL. WL. auto.
     WL. auto.
     WL. WL. auto.
-    INTRO.
+    fintro.
     MP y.
     MP y0.
     MP x0. auto.
@@ -367,14 +367,14 @@ Proof.
     WL. WL. auto.
 Qed.
 
-Instance rew_LP_pr : forall {L : Lang} T, 
-  Proper ((@equiv _ (Setoid_LP T)) ==> equiv) (provable T).
+Instance rew_Formula_pr : forall {L : Lang} T, 
+  Proper ((@equiv _ (Setoid_Formula T)) ==> equiv) (provable T).
 Proof.
   unfold Proper, respectful, equiv. 
   simpl.
   unfold preq, priff.
   intros.
-  DESTRUCT H.
+  fdestruct H.
   split.
   - intros.
     MP x. auto.

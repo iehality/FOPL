@@ -53,7 +53,7 @@ Section TarskiSemantics.
   Fixpoint Valt
   (M : Model)
   (s : nat -> Dom)
-  (t : LC) : Dom :=
+  (t : Term) : Dom :=
     match t with
     | 'm          => s m 
     | [O]         => cnsM
@@ -65,7 +65,7 @@ Section TarskiSemantics.
   Fixpoint Valp
   (M : Model)
   (s : nat -> Dom)
-  (p : LP) : Prop :=
+  (p : Formula) : Prop :=
     match p with
     | x [=] y     => (Valt M s x) == (Valt M s y)
     | Pd0 c     => Pd0M c
@@ -312,10 +312,10 @@ Section Semantics.
 
   Lemma mthsfT: forall M T, modelsTh M T -> modelsTh M (sfT T).
   Proof.
-    unfold modelsTh, sfT, sf, models.
+    unfold modelsTh, sf, models.
     intros.
     destruct H0.
-    rewrite <- H0.
+    unfold sf.
     rewrite <- lp_iff1.
     apply H.
     auto.
@@ -419,8 +419,8 @@ Section Semantics.
     induction p.
     - simpl.
       intros.
-      rewrite (Val_eq _ l _ s1).
-      rewrite (Val_eq _ l0 _ s1).
+      rewrite (Val_eq _ t _ s1).
+      rewrite (Val_eq _ t0 _ s1).
       reflexivity.
       intros. apply H. apply lt_lt_max_r. auto.
       intros. apply H. apply lt_lt_max_l. auto.
@@ -429,13 +429,13 @@ Section Semantics.
       reflexivity.
     - simpl.
       intros.
-      rewrite (Val_eq _ l _ s1).
+      rewrite (Val_eq _ t _ s1).
       reflexivity.
       auto.
     - simpl.
       intros.
-      rewrite (Val_eq _ l _ s1).
-      rewrite (Val_eq _ l0 _ s1).
+      rewrite (Val_eq _ t _ s1).
+      rewrite (Val_eq _ t0 _ s1).
       reflexivity.
       intros. apply H. apply lt_lt_max_r. auto.
       intros. apply H. apply lt_lt_max_l. auto.

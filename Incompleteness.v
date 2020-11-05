@@ -1,218 +1,126 @@
-Require Import Classical.
-Require Import Lia.
-Require Import FOPL.Basic.
+Require Import FOPL.Arithmetic.
 
 Set Implicit Arguments.
 
-Section Incompleteness.
-
-  Variable L : Lang.
-  Variable o : LC.
-  Variable Sc : LC -> LC.
-  Hypothesis o_constant : Art o = 0.
-  Hypothesis S_constant : forall x, Art x = 0 -> Art (Sc x) = 0.
-
-  Variable quin : LP -> nat.
-  Hypothesis quin_inj : forall p q, quin p = quin q -> p = q.
-  Notation "⌜ p ⌝" := (quin p) (at level 0).
+Parameter code : Formula -> nat.
+Axiom code_inj : forall p q, code p = code q -> p = q.
+Notation "⌜ p ⌝" := (code p) (at level 0).
 
 (** * Diagonal Lemma *)
 
-  Fixpoint lnat (n0 : nat) : LC := 
-    match n0 with
-    | 0 => o
-    | S n => Sc (lnat n)
-    end.
+Parameter Γ : Formula.
+Axiom artG : Ar Γ = 3.
+Axiom Gdefg : forall p n, PA ||- [fal]Γ/([⌜p⌝], n, '0) [<->] '0[=][⌜p/(n)⌝].
 
-  Notation "[ n ]" := (lnat n) (at level 0).
-
-  Lemma d_rewc : forall n s, rewc s [n] = [n].
+Section FixPoint.
+  
+  Variable θ : Formula.
+  Hypothesis opf : Ar θ = 1.
+  Definition σ : Formula := [fal](Γ/('1, '1, '0)[->]θ/('0)).
+    
+  Lemma sigiff : forall p, PA ||- σ/([⌜p⌝])[<->]θ/([⌜p/([⌜p⌝])⌝]).
   Proof.
     intros.
-    symmetry.
-    apply constant_rew.
-    induction n.
-    simpl. 
-    apply o_constant.
-    simpl.
-    apply S_constant.
+    assert(artG := artG).
+    assert(Gdefg := Gdefg).
+    assert (θrew : forall s, θ = θ .[('0);s]).
+    intros.
+    apply form1_p_ps.
     auto.
-  Qed.
-
-  Variable T : Th.
-  Variable Γ : LP.
-  Hypothesis artG : Ar Γ = 3.
-  Hypothesis Gdefg : forall p n, T ||- [fal]Γ/([⌜p⌝], n, '0)[<->]'0[=][⌜p/(n)⌝].
-
-  Section FixPoint.
-  
-    Variable θ : LP.
-    Hypothesis opf : Ar θ = 1.
-    Definition σ : LP := [fal](Γ/('1, '1, '0)[->]θ/('0)).
-    
-    Lemma sigiff : forall p, T ||- σ/([⌜p⌝])[<->]θ/([⌜p/([⌜p⌝])⌝]).
-    Proof.
-      intros.
-      assert (θrew : forall s, θ = θ .[('0);s]).
-      intros.
-      apply form1_p_ps.
+    simpl. auto.
+    unfold σ.
+    simpl.
+    rewrite_formula ((Γ /('1, '1, '0)).['0; fun x => sfc (([⌜p⌝]; \0) x)]) (Γ /( [⌜p⌝], [⌜p⌝], '0)).
+    rewrite_formula ((θ /('0)).['0; fun x => sfc (([⌜p⌝]; \0) x)]) (θ /('0)).
+    specialize(Gdefg p [⌜p⌝]).
+    apply fal_and_destruct in Gdefg.
+    destruct Gdefg.
+    fsplit.
+    + fintro.
+      Tpp.
+      fspecialize H1 [⌜p/([⌜p⌝])⌝].
+      rewrite_formula_in H1 (Γ /([⌜p⌝], [⌜p⌝], '0)/([⌜p/([⌜p⌝])⌝])) (Γ /([⌜p⌝], [⌜p⌝], [⌜p/([⌜p⌝])⌝])).
+      rewrite_formula_in H1 (θ/('0)/([⌜p/([⌜p⌝])⌝])) (θ /([⌜p/([⌜p⌝])⌝])).
+      MP(Γ/([⌜p⌝], [⌜p⌝], [⌜p/([⌜p⌝])⌝])).
+      WL.
+      fspecialize H0 [⌜p/([⌜p⌝])⌝].
+      repeat rewrite IN_rewc in H0.
+      rewrite_formula_in H0 (Γ /([⌜p⌝], [⌜p⌝], '0)/([⌜p/([⌜p⌝])⌝])) (Γ /([⌜p⌝], [⌜p⌝], [⌜p/([⌜p⌝])⌝])).
+      papply H0.
       auto.
-      simpl. auto.
-      assert (forall n, σ/([n]) = (fal (Γ/([n], [n], '0) [->] θ/('0)))).
-      - unfold σ.
-        simpl.
-        intros.
-        rewrite <- θrew.
-        rewrite <- θrew.
-        rewrite <- nested_rew.
-        assert (
-          Γ .[fun x => rewc (('0); fun x0 => sfc (([n]; \0) x0)) ((('1); (('1); (('0); \0))) x)] =
-          Γ/([n], [n], '0)
-        ). {
-         unfold sfc.
-          apply rew_rew.
-          rewrite -> artG.
-          intros.
-          destruct n0.
-          simpl.
-          apply d_rewc.
-          destruct n0.
-          simpl.
-          apply d_rewc.
-          destruct n0.
-          simpl.
-          auto.
-          lia.
-        }
-        rewrite H.
-        auto.
-      - rewrite H.
-        specialize(Gdefg p [⌜p⌝]).
-        apply fal_and_destruct in Gdefg.
-        destruct Gdefg.
-        SPLIT.
-        + assert (Gr : forall a b t, Γ/([a], [b], '0)/(t) = Γ/([a], [b], t)). 
-          { 
-            intros.
-            rewrite <- nested_rew.
-            apply rew_rew.
-            rewrite -> artG.
-            intros.
-            destruct n.
-            simpl.
-            apply d_rewc.
-            destruct n.
-            simpl.
-            apply d_rewc.
-            destruct n.
-            simpl.
-            auto.
-            lia. 
-          }
-          assert (Ur : forall t, θ/('0)/(t) = θ/(t)). {
-            intros.
-            rewrite <- nested_rew.
-            apply rew_rew.
-            intros.
-            destruct n.
-            simpl. auto.
-            lia.
-          }
-          INTRO.
-          Tpp.
-          SPECIALIZE H2 [⌜p/([⌜p⌝])⌝].
-          rewrite Gr in H2.
-          rewrite Ur in H2.
-          MP(Γ/([⌜p⌝], [⌜p⌝], [⌜p/([⌜p⌝])⌝])).
-          WL.
-          SPECIALIZE H1 [⌜p/([⌜p⌝])⌝].
-          rewrite Gr in H1.
-          repeat rewrite d_rewc in H1.
-          papply H1. auto.
-          auto.
-        + INTRO.
-          apply fal_trans with (q := '0 [=] [⌜p/([⌜p⌝])⌝]).
-          WL.
-          auto.
-          GEN.
-          INTRO.
-          assert (sf θ/([⌜p/([⌜p⌝])⌝]) = θ/([⌜p/([⌜p⌝])⌝])). {
-            unfold sf.
-            rewrite <- nested_rew.
-            apply rew_rew. rewrite -> opf.
-            intros. 
-            destruct n.
-            simpl.
-            apply d_rewc.
-            lia.
-          }
-          rewrite H2.
-          MP (θ/([⌜p/([⌜p⌝])⌝])). auto.
-          MP ([⌜p/([⌜p⌝])⌝] [=] '0).
-          SYMMETRY.
-          auto.
-          auto.
-    Qed.
+      auto.
+    + fintro.
+      apply fal_trans with (q := '0 [=] [⌜p/([⌜p⌝])⌝]).
+      WL.
+      auto.
+      GEN.
+      fintro.
+      rewrite_formula (sf (θ/([⌜p/([⌜p⌝])⌝]))) (θ/([⌜p/([⌜p⌝])⌝])).
+      MP (θ/([⌜p/([⌜p⌝])⌝])). auto.
+      MP ([⌜p/([⌜p⌝])⌝] [=] '0).
+      fsymmetry.
+      auto.
+      auto.
+  Qed.
 
     (** $\gamma := (\dot{\forall} (\Gamma/('1, '1, '0) \dot{\to} \theta/('0)))/(\delta \ulcorner \dot{\forall} (\Gamma/('1, '1, '0) \dot{\to} \theta/('0)) \urcorner )$ *)
 
-    Definition fixpoint := σ/([⌜σ⌝]).
+  Definition fixpoint := σ/([⌜σ⌝]).
 
-    Lemma Diagonal : T ||- fixpoint [<->] θ/([⌜fixpoint⌝]).
-    Proof. 
-      apply sigiff.
-    Qed.
-
-  End FixPoint.
-  
-  Theorem Undefinability : (exists Tr, Ar Tr = 1 /\ forall p, T ||- p [<->] Tr/([⌜p⌝])) -> ~ Consis T.
-  Proof.
-    intros. intro conT.
-    destruct H as [Tr].
-    destruct H.
-    assert (Ar ([~] Tr) = 1).
-    simpl. auto.
-    pose (d := fixpoint ([~] Tr)).
-    assert (D := Diagonal ([~] Tr) H1). fold d in D.
-    specialize (H0 d).
-    rewrite -> neg_sbs in D.
-    DESTRUCT H0.
-    DESTRUCT D.
-    apply conT.
-    exists d.
-    split.
-    - MP ([~] [~] d).
-      apply neg_intro.
-      INTRO.
-      MP ([~] [~] Tr/([⌜d⌝])).
-      apply deduction_inv.
-      apply contrad_add. auto.
-      apply contrad_add.
-      apply contrad_add.
-      WL. auto.
-      apply pr_NNPP.
-    - apply neg_intro.
-      INTRO.
-      MP ([~] Tr/([⌜d⌝])).
-      apply deduction_inv. auto.
-      apply contrad_add.
-      WL.
-      auto.
+  Lemma Diagonal : PA ||- fixpoint [<->] θ/([⌜fixpoint⌝]).
+  Proof. 
+    apply sigiff.
   Qed.
+
+End FixPoint.
+  
+Theorem Undefinability : Consis PA -> ~ (exists Tr, Ar Tr = 1 /\ forall p, PA ||- p [<->] Tr/([⌜p⌝])).
+Proof.
+  intros conT. intro.
+  destruct H as [Tr].
+  destruct H.
+  assert (Ar ([~] Tr) = 1).
+  simpl. auto.
+  pose (d := fixpoint ([~] Tr)).
+  assert (D := Diagonal ([~] Tr) H1). fold d in D.
+  specialize (H0 d).
+  rewrite neg_sbs in D.
+  fdestruct H0.
+  fdestruct D.
+  apply conT.
+  exists d.
+  split.
+  - apply pNNPP.
+    apply neg_intro.
+    fintro.
+    MP ([~] [~] Tr/([⌜d⌝])).
+    apply deduction_inv.
+    apply contrad_add. auto.
+    apply contrad_add.
+    apply contrad_add.
+    WL. auto.
+  - apply neg_intro.
+    fintro.
+    MP ([~] Tr/([⌜d⌝])).
+    apply deduction_inv. auto.
+    apply contrad_add.
+    WL.
+    auto.
+Qed.
   
   (** ** Incompleteness *)
   
   Section Incompleteness1.
     
     Variable prov : nat -> nat -> Prop.
-    Hypothesis proofH : forall p, (T ||- p) <-> (exists n, prov n ⌜p⌝).  
+    Hypothesis proofH : forall p, (PA ||- p) <-> (exists n, prov n ⌜p⌝).  
   
-    Variable Prov : LP.
+    Variable Prov : Formula.
     Hypothesis arProv : Ar Prov = 2.
-    Hypothesis ProvH : forall n m, prov n m <-> (T ||- Prov/([n], [m])). 
-    Hypothesis nProvH : forall n m, ~ prov n m <-> (T ||- [~] Prov/([n], [m])).
+    Hypothesis ProvH : forall n m, prov n m <-> (PA ||- Prov/([n], [m])). 
+    Hypothesis nProvH : forall n m, ~ prov n m <-> (PA ||- [~] Prov/([n], [m])).
   
-    Let PrG : LP := ext Prov.
+    Let PrG : Formula := ext Prov.
   
     Lemma Pr_sbs : forall n, PrG/([n]) = ext (Prov/('0, [n])).
     Proof.
@@ -228,7 +136,7 @@ Section Incompleteness.
       auto.
       destruct n0.
       simpl.
-      apply d_rewc.
+      apply IN_rewc.
       lia.
       rewrite H.
       auto.
@@ -247,13 +155,13 @@ Section Incompleteness.
       auto.
       destruct n0.
       simpl.
-      apply d_rewc.
+      apply IN_rewc.
       lia.
     Qed.
 
-    Let Omega_ConT := forall p, (forall n, T ||- [~] p/([n])) -> ~ (T ||- ext p).
+    Let Omega_ConT := forall p, (forall n, PA ||- [~] p/([n])) -> ~ (PA ||- ext p).
 
-    Lemma Prov_ext : Omega_ConT -> forall p, (T ||- PrG/([⌜p⌝])) -> exists n, (T ||- Prov/([n], [⌜p⌝])).
+    Lemma Prov_ext : Omega_ConT -> forall p, (PA ||- PrG/([⌜p⌝])) -> exists n, (PA ||- Prov/([n], [⌜p⌝])).
     Proof.
       intros.
       rewrite -> Pr_sbs in H0.
@@ -270,7 +178,7 @@ Section Incompleteness.
       auto.
     Qed.
   
-    Lemma E1 : forall p, Omega_ConT -> (T ||- p) <-> (T ||- PrG/([⌜p⌝])).
+    Lemma E1 : forall p, Omega_ConT -> (PA ||- p) <-> (PA ||- PrG/([⌜p⌝])).
     Proof.
       intros.
       split.
@@ -283,7 +191,7 @@ Section Incompleteness.
         rewrite <-ProvH.
         auto.
       - intros.
-        assert (exists n, (T ||- Prov/([n], [⌜p⌝]))).
+        assert (exists n, (PA ||- Prov/([n], [⌜p⌝]))).
         + apply Prov_ext.
           auto. auto.
         + destruct H1 as [n].
@@ -293,13 +201,13 @@ Section Incompleteness.
           auto.
     Qed.
   
-    Lemma OmCon_Con : Omega_ConT -> Consis T.
+    Lemma OmCon_Con : Omega_ConT -> Consis PA.
     Proof.
       intros.
       apply NNPP.
       intro.
       specialize (H ([~] [O] [=] [O])).
-      assert (~ (T ||- ext ([~] [O] [=] [O]))).
+      assert (~ (PA ||- ext ([~] [O] [=] [O]))).
       apply H.
       intros.
       simpl.
@@ -309,10 +217,10 @@ Section Incompleteness.
       auto.
     Qed.
   
-    Definition ConGT : LP := [~] PrG/([⌜[~][0][=][0]⌝]).
-    Definition G : LP := fixpoint ([~] PrG).
+    Definition ConGT : Formula := [~] PrG/([⌜[~][0][=][0]⌝]).
+    Definition G : Formula := fixpoint ([~] PrG).
   
-    Lemma Gfixpoint : T ||- G[<->][~]PrG/([⌜G⌝]).
+    Lemma Gfixpoint : PA ||- G[<->][~]PrG/([⌜G⌝]).
     Proof.
       assert (Ar ([~] PrG) = 1).
       simpl.
@@ -325,11 +233,11 @@ Section Incompleteness.
       auto.
     Qed.
   
-    Theorem Incompleteness1 : Omega_ConT -> ~ (T ||- G) /\ ~ (T ||- [~] G).
+    Theorem Incompleteness1 : Omega_ConT -> ~ (PA ||- G) /\ ~ (PA ||- [~] G).
     Proof.
       intros.
       assert (gf := Gfixpoint).
-      DESTRUCT gf.
+      fdestruct gf.
       assert (con := OmCon_Con H).    
       split.
       - intro.
@@ -357,17 +265,17 @@ Section Incompleteness.
 
   Section Incompleteness2.
   
-    Variable Pr : LP.
+    Variable Pr : Formula.
     Hypothesis arPr : Ar Pr = 1.
     
-    Hypothesis D1 : forall p, T ||- p -> T ||- Pr/([⌜p⌝]).
-    Hypothesis D2 : forall p q, T ||- Pr/([⌜p[->]q⌝]) [->] Pr/([⌜p⌝]) [->] Pr/([⌜q⌝]).
-    Hypothesis D3 : forall p, T ||- Pr/([⌜p⌝]) [->] Pr/([⌜Pr/([⌜p⌝])⌝]).
+    Hypothesis D1 : forall p, PA ||- p -> PA ||- Pr/([⌜p⌝]).
+    Hypothesis D2 : forall p q, PA ||- Pr/([⌜p[->]q⌝]) [->] Pr/([⌜p⌝]) [->] Pr/([⌜q⌝]).
+    Hypothesis D3 : forall p, PA ||- Pr/([⌜p⌝]) [->] Pr/([⌜Pr/([⌜p⌝])⌝]).
     
-    Definition γ : LP := fixpoint ([~] Pr).
-    Definition ConT : LP := [~] Pr/([⌜[~][0][=][0]⌝]).
+    Definition γ : Formula := fixpoint ([~] Pr).
+    Definition ConT : Formula := [~] Pr/([⌜[~][0][=][0]⌝]).
     
-    Lemma nPrfix : T ||- γ[<->][~]Pr/([⌜γ⌝]).
+    Lemma nPrfix : PA ||- γ[<->][~]Pr/([⌜γ⌝]).
     Proof.
       assert (Ar ([~] Pr) = 1).
       simpl.
@@ -378,15 +286,15 @@ Section Incompleteness.
       auto.
     Qed.
     
-    Lemma Consis_g : T ||- ConT [->] γ.
+    Lemma Consis_g : PA ||- ConT [->] γ.
     Proof.
       assert (D := nPrfix). 
-      DESTRUCT D.
+      fdestruct D.
       unfold ConT.
       apply contrad_elim.
-      INTRO.
+      fintro.
       apply pNN.
-      assert (forall p, T ¦ ([~] γ) ||- Pr/([⌜p⌝])).
+      assert (forall p, PA ¦ ([~] γ) ||- Pr/([⌜p⌝])).
       - intros.
         MP (Pr/([⌜[~]Pr/([⌜γ⌝])⌝])).
         + MP (Pr/([⌜γ⌝])).
@@ -409,7 +317,7 @@ Section Incompleteness.
           MP (Pr/([⌜Pr/([⌜γ⌝])[->][~]Pr/([⌜γ⌝])[->]p⌝])).
           WL.
           apply D1.
-          INTRO. INTRO.
+          fintro. fintro.
           apply explosion.
           intro. destruct H1.
           exists (Pr/([⌜γ⌝])). split.
@@ -421,12 +329,12 @@ Section Incompleteness.
       - auto.
     Qed.
     
-    Theorem Incompleteness : T ||- ConT -> ~ Consis T.
+    Theorem Incompleteness : PA ||- ConT -> ~ Consis PA.
     Proof.
       assert (D := nPrfix).
-      DESTRUCT D.
+      fdestruct D.
       intros.
-      assert (T ||- γ).
+      assert (PA ||- γ).
       MP ConT. auto.
       apply Consis_g.    
       intro. 
@@ -439,7 +347,7 @@ Section Incompleteness.
       auto.
     Qed.
   
-    Lemma pr_distr : forall p q r, (T ¦ r ||- Pr/([⌜p[->]q⌝])) -> (T ¦ r ||- Pr/([⌜p⌝]) [->] Pr/([⌜q⌝])).
+    Lemma pr_distr : forall p q r, (PA ¦ r ||- Pr/([⌜p[->]q⌝])) -> (PA ¦ r ||- Pr/([⌜p⌝]) [->] Pr/([⌜q⌝])).
     Proof.
       intros.
       MP (Pr/([⌜p[->]q⌝])). auto.
@@ -447,7 +355,7 @@ Section Incompleteness.
       apply D2.
     Qed. 
   
-    Theorem Loeb : forall p, Ar p = 0 -> (T ||- Pr/([⌜p⌝])[->]p) -> (T ||- p).
+    Theorem Loeb : forall p, Ar p = 0 -> (PA ||- Pr/([⌜p⌝])[->]p) -> (PA ||- p).
     Proof.
       intros.
       assert (Ar (Pr/('0) [->] p) = 1).
@@ -474,9 +382,9 @@ Section Incompleteness.
       auto. auto.
       rewrite <- H2 in D.
   
-      DESTRUCT D.
-      assert (T ||- Pr/([⌜q⌝]) [->] p).
-      - INTRO.
+      fdestruct D.
+      assert (PA ||- Pr/([⌜q⌝]) [->] p).
+      - fintro.
         MP (Pr/([⌜p⌝])).
         MP (Pr/([⌜Pr/([⌜q⌝])⌝])).
         apply deduction_inv.

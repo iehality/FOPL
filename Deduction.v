@@ -5,40 +5,9 @@ Require Import FOPL.FOPL.
 
 Set Implicit Arguments.
   
-Definition Th {L : Lang} := @LP L -> Prop.
+Definition Th {L : Lang} := @Formula L -> Prop.
   
   (** * Hilbert Style Deduction System *)
-
-Fixpoint alterablet {L : Lang} (n : nat) (t0 : LC) : bool :=
-  match t0 with
-  | 'v        => negb (n =? v)
-  | Fc1 _ x   => alterablet n x
-  | Fc2 _ x y => alterablet n x && alterablet n y
-  | _         => true
-  end.
-  
-Fixpoint alterable0 {L : Lang} (n : nat) (p0 : LP) : bool :=
-  match p0 with
-  | x[=]y     => alterablet n x && alterablet n y
-  | Pd1 c x   => alterablet n x
-  | Pd2 c x y => alterablet n x && alterablet n y
-  | imp p q   => alterable0 n p && alterable0 n q
-  | neg p     => alterable0 n p
-  | fal p     => alterable0 (S n) p
-  | _         => true
-  end.
-
-Definition alterable {L : Lang} p := alterable0 0 p.
-
-Lemma alt_sf {L : Lang} : forall p, alt (sf p) = p.
-Proof.
-  intros.
-  unfold alt, sf.
-  rewrite <- nested_rew.
-  simpl.
-  rewrite rew_id.
-  auto.
-Qed.
   
 Inductive sfT {L : Lang} (T : Th) : Th := 
 | sfT_intro : forall p, T p -> sfT T (sf p).
@@ -46,16 +15,16 @@ Hint Constructors sfT : core.
 
 Notation "⇑ T" := (sfT T) (at level 20).
 
-Inductive provable {L : Lang} (T : Th) : LP -> Prop :=
-  | GEN  : forall q, provable (sfT T) q -> provable T (fal q)
+Inductive provable {L : Lang} (T : Th) : Formula -> Prop :=
+  | GEN  : forall q, provable (⇑ T) q -> provable T ([∀] q)
   | MP   : forall p q, provable T p -> provable T (p [->] q) -> provable T q
   | Pr0  : forall p, T p -> provable T p
   | Pr1  : forall p q, provable T (p [->] q [->] p)
   | Pr2  : forall p q r, provable T ((p [->] q [->] r) [->] ((p [->] q) [->] (p [->] r)))
   | Pr3  : forall p q, provable T (([~] p [->] [~] q) [->] (q [->] p))
-  | Qt0  : forall p t, provable T (fal p [->] p/(t))
-  | Qt1  : forall p q, provable T (fal (p [->] q) [->] ((fal p) [->] (fal q)))
-  | Qt2  : forall p, provable T (p [->] fal (sf p))
+  | Qt0  : forall p t, provable T (([∀] p) [->] p/(t))
+  | Qt1  : forall p q, provable T (([∀] p [->] q) [->] ([∀] p) [->] [∀] q)
+  | Qt2  : forall p, provable T (p [->] [∀] (🡑 p))
   | Eq0  : forall t, provable T (t [=] t)
   | Eq1  : forall p t u, provable T (t [=] u [->] p/(t) [->] p/(u)).
 
@@ -65,7 +34,7 @@ Notation "T ||- p" := (provable T p) (at level 70).
 
 Definition Consis {L : Lang} (T : Th) := ~ exists p, (T ||- p) /\ (T ||- [~]p).
 
-Inductive addT {L : Lang} (T : Th) (p : LP) : Th :=
+Inductive addT {L : Lang} (T : Th) (p : Formula) : Th :=
 | appnew : addT T p p
 | appdom : forall q, T q -> addT T p q.
 
@@ -133,7 +102,7 @@ Section deduction_facts.
     auto.
   Qed.
   
-  Ltac TRANS h := apply imp_trans with (q:=h).
+  Ltac ftrans h := apply imp_trans with (q:=h).
   
   Lemma TInclusion : forall (T U : Th) p, T ⊆ U -> T ||- p -> U ||- p.
   Proof.
@@ -257,7 +226,7 @@ Section deduction_facts.
         auto.
   Qed.
   
-  Ltac INTRO := apply Deduction.
+  Ltac fintro := apply Deduction.
   
   Lemma sf_dsb0 : forall T p, (sfT T¦ sf p) ⊆ (sfT (T ¦ p)).
   Proof.
@@ -291,7 +260,7 @@ Section deduction_facts.
   Proof.
     intros.
     MP p. auto.
-    INTRO. auto.
+    fintro. auto.
   Qed.
 
   Ltac MPI h := apply MPintro with (p:=h).
@@ -325,8 +294,8 @@ Section deduction_facts.
   Lemma p_np_q : forall T p q, T ||- p [->] [~] p [->] q.
   Proof.
     intros.
-    INTRO.
-    INTRO.
+    fintro.
+    fintro.
     apply explosion.
     unfold Consis.
     intro.
@@ -359,7 +328,7 @@ Section deduction_facts.
   Lemma pr_NNPP : forall T p, T ||- [~] [~] p [->] p.
   Proof.
     intros.
-    INTRO.
+    fintro.
     MP ([~] [~] p).
     auto.
     MP ([~] p [->] [~] [~] [~] p).
@@ -406,11 +375,11 @@ Section deduction_facts.
   Proof.
     intros.
     MP (p [->] [~] p). auto.
-    INTRO.
+    fintro.
     MP (p [->] [~] p).
     auto.
     MP ([~] [~] p [->] [~] (p [->] [~] p)).
-    INTRO.
+    fintro.
     apply explosion.
     unfold Consis.
     intro. contradict H0.
@@ -428,7 +397,7 @@ Section deduction_facts.
   Proof.
     intros.
     apply neg_intro.
-    INTRO.
+    fintro.
     apply explosion.
     unfold Consis. 
     intro. contradict H1.
@@ -449,7 +418,7 @@ Section deduction_facts.
   Proof.
     intros.
     MP ([~] [~] p [->] [~] [~] q).
-    INTRO.
+    fintro.
     MP q.
     MP p.
     MP ([~] [~] p). auto.
@@ -466,7 +435,7 @@ Section deduction_facts.
     unfold andl.
     intros.
     apply neg_intro.
-    - INTRO.
+    - fintro.
       MP q.
       apply weakening.
       auto.
@@ -487,16 +456,16 @@ Section deduction_facts.
     split.
     - MP ([~] (p [->] [~] q)). auto.
       MP ([~] p [->] [~] [~] (p [->] [~] q)).
-      INTRO.
+      fintro.
       MP (p [->] [~] q).
-      INTRO.
+      fintro.
       apply explosion0 with (p:=p).
       auto. auto.
       apply pr_NN.
       auto.
     - MP ([~] (p [->] [~] q)). auto.
       MP ([~] q [->] [~] [~] (p [->] [~] q)).
-      INTRO.
+      fintro.
       MP (p [->] [~] q).
       apply imp_pr. auto.
       apply pr_NN.
@@ -513,14 +482,14 @@ Section deduction_facts.
     auto.
   Qed.
   
-  Ltac SPLIT := apply destruct_iff || apply destruct_and.
-  Ltac DESTRUCT h := apply and_destruct in h; destruct h.
+  Ltac fsplit := apply destruct_iff || apply destruct_and.
+  Ltac fdestruct h := apply and_destruct in h; destruct h.
   
   Lemma pr_rewrite2 : forall {T} {p0 p1 r}, 
     (T ||- p0 [<->] p1) -> (T ||- p0 [->] r) -> (T ||- p1 [->] r).
   Proof.
     intros.
-    DESTRUCT H.
+    fdestruct H.
     apply imp_trans with (q := p0). 
     auto.
     auto.
@@ -539,7 +508,7 @@ Section deduction_facts.
     intros.
     assert (p .['0; (sfc s .; \0)]/(t) = p/(t, s)).
     - unfold sfc.
-      rewrite <- nested_rew.
+      rewrite nested_rew.
       apply rew_rew.
       intros.
       destruct n.
@@ -548,7 +517,7 @@ Section deduction_facts.
       simpl.
       destruct n.
       simpl.
-      rewrite <- nested_rewc.
+      rewrite nested_rewc.
       simpl.
       symmetry.
       apply rewc_id.
@@ -583,7 +552,7 @@ Section deduction_facts.
     unfold ext.
     MP (p/(t)). auto.
     apply contrad_elim.
-    INTRO.
+    fintro.
     MP (fal ([~] p)).
     apply pNNPP. 
     auto.
@@ -596,11 +565,11 @@ Section deduction_facts.
   Proof.
     unfold ext.
     intros.
-    INTRO.
+    fintro.
     apply pNNPP.
     apply deduction_inv.
     apply contrad_add.
-    INTRO.
+    fintro.
     GEN.
     apply sf_dsb.
     apply deduction_inv.
@@ -614,7 +583,7 @@ Section deduction_facts.
   Qed.
 
   
-  Ltac SPECIALIZE h u := apply fal_R with (t := u) in h.
+  Ltac fspecialize h u := apply fal_R with (t := u) in h.
   
   Lemma fal_and_destruct : forall T p q, 
     (T ||- fal (p [/\] q)) -> ((T ||- fal p) /\ (T ||- fal q)).
@@ -624,17 +593,17 @@ Section deduction_facts.
     - MP (fal (p [/\] q)). auto.
       MP (fal ((p [/\] q) [->] p)).
       GEN.
-      INTRO.
+      fintro.
       assert (sfT T ¦ (p [/\] q) ||- p [/\] q). auto.
-      DESTRUCT H0.
+      fdestruct H0.
       auto.
       auto.
     - MP (fal (p [/\] q)). auto.
       MP (fal ((p [/\] q) [->] q)).
       GEN.
-      INTRO.
+      fintro.
       assert (sfT T ¦ (p [/\] q) ||- p [/\] q). auto.
-      DESTRUCT H0.
+      fdestruct H0.
       auto.
       auto.
   Qed.
@@ -649,7 +618,7 @@ Section deduction_facts.
     MP (fal (q [->] r)). auto.
     MP (fal ((q [->] r) [->] (p [->] q [->] r))).
     GEN.
-    repeat INTRO.
+    repeat fintro.
     MP q.
     auto.
     auto.
@@ -666,14 +635,14 @@ Section deduction_facts.
   Proof.
     intros.
     MP (t [=] u). auto.
-    INTRO.
+    fintro.
     MP (t [=] t). auto.
     MP (t [=] u). auto.
     assert (forall v, (v [=] t) = ('0 [=] sfc t)/(v)).
     unfold sfc.
     intros.
     simpl.
-    rewrite <- nested_rewc.
+    rewrite nested_rewc.
     simpl.
     rewrite <- rewc_id.
     auto.
@@ -702,7 +671,7 @@ Section deduction_facts.
     unfold sfc.
     intros.
     simpl.
-    rewrite <- nested_rewc.
+    rewrite nested_rewc.
     simpl.
     rewrite <- rewc_id.
     auto.
@@ -718,12 +687,14 @@ Ltac GEN := apply GEN; try apply sf_dsb.
 Ltac MP h := apply (@MP _ _ h _).
 Hint Resolve p__p : core.
 Ltac MPI h := apply MPintro with (p:=h).
-Ltac TRANS h := apply imp_trans with (q:=h).
-Ltac INTRO := apply Deduction.
-Ltac SPLIT := apply destruct_iff || apply destruct_and.
-Ltac DESTRUCT h := apply and_destruct in h; destruct h.
-Ltac SPECIALIZE H u := apply fal_R with (t := u) in H; simpl in H.
-Ltac EXISTS u := apply ext_R with (t := u).
-Ltac SYMMETRY := apply eql_refl.
+Ltac ftrans h := apply imp_trans with (q:=h).
+Ltac fintro := apply Deduction.
+Ltac fintros := repeat apply Deduction.
+Ltac fsplit := apply destruct_iff || apply destruct_and.
+Ltac fdestruct h := apply and_destruct in h; destruct h.
+Ltac fspecialize H u := apply fal_R with (t := u) in H; simpl in H.
+Ltac fexists u := apply ext_R with (t := u).
+Ltac fsymmetry := apply eql_refl.
 Ltac RAA h := apply RAA with (q:=h).
 Ltac WL := apply weakening.
+Ltac WLs := repeat apply weakening.

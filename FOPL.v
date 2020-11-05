@@ -49,21 +49,21 @@ Require Import Lia.
 
 Class Lang := {fc0 : Type; fc1 : Type; fc2 : Type; pd0 : Type; pd1 : Type; pd2 : Type}.
 
-Inductive LC {L : Lang} :=
-| var : nat -> LC
-| cns : LC
-| Fc0 : fc0 -> LC
-| Fc1 : fc1 -> LC -> LC
-| Fc2 : fc2 -> LC -> LC -> LC.
+Inductive Term {L : Lang} :=
+| var : nat -> Term
+| cns : Term
+| Fc0 : fc0 -> Term
+| Fc1 : fc1 -> Term -> Term
+| Fc2 : fc2 -> Term -> Term -> Term.
 
-Inductive LP {L : Lang} :=
-| eql : LC -> LC -> LP
-| Pd0 : pd0 -> LP
-| Pd1 : pd1 -> LC -> LP
-| Pd2 : pd2 -> LC -> LC -> LP
-| imp : LP -> LP -> LP
-| neg : LP -> LP
-| fal : LP -> LP.
+Inductive Formula {L : Lang} :=
+| eql : Term -> Term -> Formula
+| Pd0 : pd0 -> Formula
+| Pd1 : pd1 -> Term -> Formula
+| Pd2 : pd2 -> Term -> Term -> Formula
+| imp : Formula -> Formula -> Formula
+| neg : Formula -> Formula
+| fal : Formula -> Formula.
 
 Notation "' v " := (var v) (at level 5).
 Notation "𝟬" := ('0).
@@ -103,7 +103,7 @@ Definition embed {A : Type} (s : nat -> A) (a : A) : nat -> A := fun n =>
 Notation "( n ; s )" := (slide s n) (at level 0).
 Notation "( n .; s )" := (embed s n) (at level 0).
 
-Fixpoint rewc {L : Lang} (s : nat -> LC) (c : LC) : LC :=
+Fixpoint rewc {L : Lang} (s : nat -> Term) (c : Term) : Term :=
   match c with
   | var v     => s v
   | cns       => cns
@@ -112,9 +112,9 @@ Fixpoint rewc {L : Lang} (s : nat -> LC) (c : LC) : LC :=
   | Fc2 c x y => Fc2 c (rewc s x) (rewc s y)
   end.
 
-Definition sfc {L : Lang} (c : LC) := rewc (fun x => (var (S x))) c.
+Definition sfc {L : Lang} (c : Term) := rewc (fun x => (var (S x))) c.
 
-Fixpoint rew {L : Lang} (s : nat -> LC) (p0 : LP) : LP :=
+Fixpoint rew {L : Lang} (s : nat -> Term) (p0 : Formula) : Formula :=
   match p0 with
   | eql x y   => eql (rewc s x) (rewc s y)
   | Pd0 c     => Pd0 c
@@ -125,14 +125,14 @@ Fixpoint rew {L : Lang} (s : nat -> LC) (p0 : LP) : LP :=
   | fal p     => fal (rew ((var 0); fun x => (sfc (s x))) p)
   end.
 
-Notation "p .[ s ]" := (rew s p) (at level 0).
-Notation "p .[ n ; s ]" := (p .[(n;s)]) (at level 0).
+Notation "p .[ s ]" := (rew s p) (at level 20).
+Notation "p .[ n ; s ]" := (p .[(n;s)]) (at level 20).
 Notation "\0" := (fun x => (var x)) (at level 0).
-Definition sf {L : Lang} (p : LP) : LP := p .[fun x => (var (S x))].
-Definition alt {L : Lang} (p : LP) : LP := p.[fun x => '(pred x)].
+Definition sf {L : Lang} (p : Formula) : Formula := p .[fun x => (var (S x))].
+Definition alt {L : Lang} (p : Formula) : Formula := p.[fun x => '(pred x)].
 Notation "🠙 t" := (sfc t) (at level 5, right associativity).
-Notation "↑ p" := (sf p) (at level 5, right associativity).
-Notation "↓ p" := (alt p) (at level 5, right associativity).
+Notation "🡑 p" := (sf p) (at level 5, right associativity).
+Notation "🡓 p" := (alt p) (at level 5, right associativity).
 Definition norm {L : Lang} c p := p .[fun x => c].
 Notation "p /( x )" := (p .[x;\0]) (at level 50).
 Notation "p /( x , y )" := (p .[x; (y; \0)]) (at level 50).
@@ -143,7 +143,7 @@ Notation "p //( x )" := (p .[(x.;\0)]) (at level 50).
 Section basic_facts.
   Variable L : Lang.
 
-  Lemma nested_rewc : forall s0 s1 t, rewc (fun x => rewc s1 (s0 x)) t = (rewc s1 (rewc s0 t)).
+  Lemma nested_rewc : forall s0 s1 t, (rewc s1 (rewc s0 t)) = rewc (fun x => rewc s1 (s0 x)) t.
   Proof.
     intros.
     induction t.
@@ -154,11 +154,11 @@ Section basic_facts.
     - simpl.
       auto.
     - simpl.
-      rewrite -> IHt.
+      rewrite IHt.
       auto.
     - simpl.
-      rewrite -> IHt1.
-      rewrite -> IHt2.
+      rewrite IHt1.
+      rewrite IHt2.
       auto.
   Qed.
 
@@ -173,32 +173,32 @@ Section basic_facts.
     - simpl.
       auto.
     - simpl.
-      rewrite -> IHt.
+      rewrite IHt.
       auto.
     - simpl.
-      rewrite -> IHt1.
-      rewrite -> IHt2.
+      rewrite IHt1.
+      rewrite IHt2.
       auto.
   Qed.
 
-  Lemma nested_rew : forall p s0 s1, p .[fun x => rewc s1 (s0 x)] = p .[s0] .[s1].
+  Lemma nested_rew : forall p s0 s1, p.[s0].[s1] = p.[fun x => rewc s1 (s0 x)].
   Proof.
     induction p.
     - simpl.
       intros.
-      rewrite <- nested_rewc.
-      rewrite <- nested_rewc.
+      rewrite nested_rewc.
+      rewrite nested_rewc.
       auto.
     - simpl.
       auto.
     - simpl.
       intros.
-      rewrite <- nested_rewc.
+      rewrite nested_rewc.
       auto.
     - simpl.
       intros.
-      rewrite <- nested_rewc.
-      rewrite <- nested_rewc.
+      rewrite nested_rewc.
+      rewrite nested_rewc.
       auto.
     - simpl.
       intros.
@@ -211,19 +211,22 @@ Section basic_facts.
       auto.
     - simpl.
       intros.
-      rewrite <- IHp.
-      assert ( ((var 0); fun x => sfc (rewc s1 (s0 x))) = (fun x => rewc ((var 0); fun x0 => sfc (s1 x0)) (((var 0); fun x0 => sfc (s0 x0)) x))).
+      rewrite IHp.
+      assert (
+        (fun x => rewc ((var 0); fun x0 => sfc (s1 x0)) (((var 0); fun x0 => sfc (s0 x0)) x)) =
+        ((var 0); fun x => sfc (rewc s1 (s0 x)))
+      ).
       + apply functional_extensionality.
         intros.
         destruct x.
         simpl.
         auto.
         simpl.
-        rewrite -> rewcsf_rwec.
+        rewrite rewcsf_rwec.
         unfold sfc.
-        rewrite <- nested_rewc.
+        rewrite nested_rewc.
         auto.
-      + rewrite <- H.
+      + rewrite H.
         auto.
   Qed.
 
@@ -297,14 +300,24 @@ Section basic_facts.
   Proof.
     unfold sfc.
     intros.
-    rewrite <- nested_rewc.
+    rewrite nested_rewc.
     simpl.
     apply rewc_id.
   Qed.
 
+  Lemma alt_sf : forall p, alt (sf p) = p.
+  Proof.
+    intros.
+    unfold alt, sf.
+    rewrite nested_rew.
+    simpl.
+    rewrite rew_id.
+    auto.
+  Qed.
+  
 End basic_facts.
   
-Fixpoint Art {L : Lang} (t0 : LC) : nat :=
+Fixpoint Art {L : Lang} (t0 : Term) : nat :=
   match t0 with
   | var n     => S n
   | cns       => 0
@@ -313,7 +326,7 @@ Fixpoint Art {L : Lang} (t0 : LC) : nat :=
   | Fc2 _ x y => max (Art x) (Art y)
   end.
 
-Fixpoint Ar {L : Lang} (p0 : LP) : nat :=
+Fixpoint Ar {L : Lang} (p0 : Formula) : nat :=
   match p0 with
   | eql t u   => max (Art t) (Art u)
   | Pd0 _     => 0
@@ -371,12 +384,12 @@ Section rew_facts.
     induction p.
     - simpl.
       intros.
-      assert (rewc s0 l = rewc s1 l).
+      assert (rewc s0 t = rewc s1 t).
       apply rewc_rewc.
       intros.
       apply H.
       apply lt_lt_max_l. auto.
-      assert (rewc s0 l0 = rewc s1 l0).
+      assert (rewc s0 t0 = rewc s1 t0).
       apply rewc_rewc.
       intros.
       apply H.
@@ -388,7 +401,7 @@ Section rew_facts.
       auto.
     - simpl.
       intros.
-      assert (rewc s0 l = rewc s1 l).
+      assert (rewc s0 t = rewc s1 t).
       apply rewc_rewc.
       intros.
       auto.
@@ -396,12 +409,12 @@ Section rew_facts.
       auto.
     - simpl.
       intros.
-      assert (rewc s0 l = rewc s1 l).
+      assert (rewc s0 t = rewc s1 t).
       apply rewc_rewc.
       intros.
       apply H.
       apply lt_lt_max_l. auto.
-      assert (rewc s0 l0 = rewc s1 l0).
+      assert (rewc s0 t0 = rewc s1 t0).
       apply rewc_rewc.
       intros.
       apply H.
@@ -452,7 +465,7 @@ Section rew_facts.
     intros.
     assert ( rewc \0 t = rewc s t).
     - apply rewc_rewc.
-      rewrite -> H.
+      rewrite H.
       lia.
     - rewrite <- H0.
       apply rewc_id.
@@ -463,7 +476,7 @@ Section rew_facts.
     intros.
     assert (p .[\0] = p .[s]).
     - apply rew_rew.
-      rewrite -> H.
+      rewrite H.
       intros.
       destruct n.
       lia.
@@ -477,7 +490,7 @@ Section rew_facts.
     intros.
     assert (p .[\0] = p .[s]).
     - apply rew_rew.
-      rewrite -> H.
+      rewrite H.
       intros.
       destruct n.
       auto.
@@ -490,7 +503,7 @@ Section rew_facts.
   Proof.
     intros.
     apply rew_rew.
-    rewrite -> H.
+    rewrite H.
     intros.
     destruct n.
     auto.
@@ -514,7 +527,7 @@ Section rew_facts.
   Proof.
     intros.
     apply rew_rew.
-    rewrite -> H.
+    rewrite H.
     intros.
     destruct n.
     simpl. auto.
@@ -525,74 +538,78 @@ Section rew_facts.
     lia.
   Qed.
 
-End rew_facts.
-
-Fixpoint minvt {L : Lang} (n0 : nat) (t0 : LC) : Prop :=
-  match t0 with
-  | var n     => n0 <= n
-  | Fc1 _ x   => minvt n0 x
-  | Fc2 _ x y => (minvt n0 x) /\ (minvt n0 y)
-  | _         => True
-  end.
-
-Fixpoint minv {L : Lang} (n0 : nat) (p0 : LP) : Prop :=
-  match p0 with
-  | t[=]u     => (minvt n0 t) /\ (minvt n0 u)
-  | Pd1 _ x   => minvt n0 x
-  | Pd2 _ x y => (minvt n0 x) /\ (minvt n0 y)
-  | imp p q   => (minv n0 p) /\ (minv n0 q)
-  | neg p     => minv n0 p 
-  | fal p     => minv (S n0) p
-  | _         => True
-  end.
-
-Definition fs {L : Lang} (p : LP) : LP := p.[fun x => (var (pred x))].
-Definition fsc {L : Lang} (t : LC) : LC := rewc (fun x => (var (pred x))) t.
-
-Section fs_facts.
-  Variable L :Lang.
-
-  Lemma fs_sf : forall p, p = fs (sf p).
+  Lemma Art_rew_le: forall t s n, 
+    (forall m, m < Art t -> Art (s m) <= n) ->
+    Art (rewc s t) <= n.
   Proof.
-    unfold sf, fs.
-    induction p.
-    - simpl.
-      repeat rewrite <- nested_rewc.
-      simpl.
-      rewrite <- rewc_id.
-      rewrite <- rewc_id.
-      auto.
+    intros.
+    induction t.
+    - simpl. auto.
+    - simpl. lia.
+    - simpl. lia.
     - simpl. auto.
     - simpl.
-      repeat rewrite <- nested_rewc.
-      simpl.
-      rewrite <- rewc_id.
-      auto.
-    - simpl.
-      repeat rewrite <- nested_rewc.
-      simpl.
-      rewrite <- rewc_id.
-      rewrite <- rewc_id.
-      auto.
-    - simpl.
-      rewrite <- IHp1.
-      rewrite <- IHp2.
-      auto.
-    - simpl.
-      rewrite <- IHp.
-      auto.
-    - simpl.
-      unfold sfc.
-      simpl.
-      rewrite -> IHp at 1.
-      repeat rewrite <- nested_rew.
-      apply fal_eq.
-      apply rew_rew.
-      intros.
-      destruct n.
-      simpl. auto.
-      simpl. auto.
+      simpl in H.
+      apply Nat.max_lub.
+      apply IHt1. intros. apply H. lia.
+      apply IHt2. intros. apply H. lia.
   Qed.
 
-End fs_facts.
-  
+  Lemma Ar_rew_le : forall p s n,
+    (forall m, m < Ar p -> Art (s m) <= n) -> Ar (p.[s]) <= n.
+  Proof.
+    assert(le_pred : forall n m, n <= S m -> pred n <= m).
+    {intros. lia. }
+    induction p.
+    - simpl.
+      intros.
+      apply Nat.max_lub.
+      rewrite (Art_rew_le _ _ n). lia. intros. apply H. lia.
+      rewrite (Art_rew_le _ _ n). lia. intros. apply H. lia.
+    - simpl. lia.
+    - simpl.
+      intros.
+      rewrite (Art_rew_le _ _ n). lia. intros. apply H. lia.
+    - simpl.
+      intros.
+      apply Nat.max_lub.
+      rewrite (Art_rew_le _ _ n). lia. intros. apply H. lia.
+      rewrite (Art_rew_le _ _ n). lia. intros. apply H. lia.
+    - simpl.
+      intros.
+      apply Nat.max_lub.
+      apply IHp1. intros. apply H. lia.
+      apply IHp2. intros. apply H. lia.
+    - simpl.
+      intros.
+      apply IHp. intros. apply H. lia.
+    - simpl.
+      intros.
+      unfold sfc.
+      apply le_pred.
+      apply IHp.
+      intros.
+      destruct m.
+      simpl. lia.
+      simpl.
+      apply Art_rew_le. simpl.
+      intros.
+      assert(Art (s m) <= n).
+      apply H. lia.
+      lia.
+  Qed.
+
+  Lemma Ar_rew_of : forall p t, 
+    Ar p = 1 -> Art t = 0 -> Ar (p/(t)) = 0.
+  Proof.
+    intros.
+    assert(Ar (p/(t)) <= 0).
+    apply Ar_rew_le.
+    intros.
+    destruct m.
+    simpl. lia.
+    lia.
+    lia.
+  Qed.
+
+End rew_facts.

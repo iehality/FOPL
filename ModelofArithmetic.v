@@ -188,7 +188,7 @@ Lemma pred_replace : forall T c,
 Proof.
   intros.
   assert(T ||- [0][=/=]c[<->][ext](sfc c)[=][S]'0).
-  - SPLIT.
+  - fsplit.
     assert(([0][=/=]'0[->][ext]'1[=][S]'0)/(c) = ([0][=/=]c[->][ext](sfc c)[=][S]'0)).
     simpl. reflexivity.
     rewrite <- H1.
@@ -201,15 +201,15 @@ Proof.
     unfold sf, sfc. simpl. reflexivity.
     rewrite <- H1.
     apply contrad_elim.
-    TRANS ([0][=](sfc c)).
-    INTRO.
+    ftrans ([0][=](sfc c)).
+    fintro.
     apply pNNPP. auto.
-    INTRO.
+    fintro.
     MP (([0][=/=][S]'0)/('0)).
     apply fal_R. auto.
     simpl.
     apply contrad_add.
-    INTRO.
+    fintro.
     REW_at_1r.
     REW_at_2.
     auto.
@@ -262,7 +262,7 @@ Proof.
   rewrite <- le_replace.
   unfold sfc.
   repeat rewrite IN_rewc.
-  EXISTS [m - n].
+  fexists [m - n].
   simpl.
   repeat rewrite IN_rewc.
   assert (m = n + (m - n)).
@@ -300,7 +300,7 @@ Proof.
     rewrite H.
     rewrite H.
     auto.
-  - TRANS ([n][+]c[=][n][+]d).
+  - ftrans ([n][+]c[=][n][+]d).
     simpl.
     rewrite PLUS0.
     rewrite PLUS0.
@@ -332,7 +332,7 @@ Proof.
     WL.
     rewrite O0.
     assert(Q ||- [fal][0][=/=][S]'0). auto.
-    SPECIALIZE H1 [m].
+    fspecialize H1 [m].
     auto.
   - apply nat_neq.
     auto.
@@ -358,14 +358,14 @@ Proof.
       apply sfTQQ.
       rewrite PLUS0 at 1.
       assert(Q ||- [fal][0][=/=][S]'0). auto.
-      SPECIALIZE H1 ([m0][+]'0).
+      fspecialize H1 ([m0][+]'0).
       apply neq_symm. auto.
     + simpl.
       GEN.
       apply TInclusion with (T:=Q).
       apply sfTQQ.
       rewrite PLUS0 at 1.
-      SPECIALIZE IHn0 ('0).
+      fspecialize IHn0 ('0).
       repeat rewrite IN_rewc in IHn0.
       RAA (([S] [n0 + m0]) [+] '0 [=] [n0]).
       apply deduction_inv.
@@ -424,14 +424,14 @@ Proof.
       * simpl.
         intros.
         rewrite (Delta0_term_complete _ s).
-        rewrite (Delta0_term_complete l0 s).
+        rewrite (Delta0_term_complete t0 s).
         rewrite H2.
         auto.
         auto. auto.
       * simpl.
         intros.
         rewrite (Delta0_term_complete _ s).
-        rewrite (Delta0_term_complete l0 s).
+        rewrite (Delta0_term_complete t0 s).
         apply neq_compl. auto.
         auto. auto.
     + destruct p.
@@ -444,12 +444,12 @@ Proof.
       split.
       * intros.
         rewrite (Delta0_term_complete _ s).
-        rewrite (Delta0_term_complete l0 s).
+        rewrite (Delta0_term_complete t0 s).
         apply le_compl. auto.
         auto. auto.
       * intros.
         rewrite (Delta0_term_complete _ s).
-        rewrite (Delta0_term_complete l0 s).
+        rewrite (Delta0_term_complete t0 s).
         apply nle_compl. auto.
         auto. auto.
     + simpl in H.
@@ -466,7 +466,7 @@ Proof.
         MP ([~]p1).
         apply IHp1.
         auto. auto. auto.
-        INTRO. INTRO.
+        fintros.
         apply explosion0 with (p:=p1). auto. auto.
         MP p2.
         apply IHp2.
@@ -476,7 +476,7 @@ Proof.
         apply nimp_andn in H3.
         destruct H3.
         assert(Q ||- p1[/\]([~]p2)).
-        SPLIT.
+        fsplit.
         apply IHp1.
         auto. auto. auto.
         apply IHp2.
@@ -503,7 +503,7 @@ Proof.
     destruct H2 as [q].
     destruct H2.
     destruct H3.
-    DESTRUCT H4.
+    fdestruct H4.
     MP q.
     apply H with (s:=id).
     auto.
@@ -544,7 +544,7 @@ Proof.
   destruct H1 as [q].
   destruct H1.
   destruct H2.
-  DESTRUCT H3.
+  fdestruct H3.
   assert(N |= q). {
     assert(S:=Q_Soundness(p[->]q) H3).
     unfold models.
@@ -557,12 +557,12 @@ Proof.
   - apply Delta0_complete.
     unfold Delta0.
     split. auto.
-    exists q. split. auto. split. auto. SPLIT. auto. auto. auto.
+    exists q. split. auto. split. auto. fsplit. auto. auto. auto.
   - rewrite <- H9 in H5.
     rewrite <- H9 in H1. simpl in H1.
     apply Sigma1_val in H5.
     destruct H5 as [m].
-    EXISTS [m].
+    fexists [m].
     apply Delta0_complete.
     unfold Delta0.
     split. simpl.

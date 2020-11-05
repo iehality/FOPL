@@ -6,7 +6,7 @@ Require Import FOPL.Arithmetic.
 
 Set Implicit Arguments.
 
-Fixpoint delta0 (p0 : LP) : bool :=
+Fixpoint delta0 (p0 : Formula) : bool :=
   match p0 with
   | [~]p   => delta0 p
   | p[->]q => (delta0 p) && (delta0 q)
@@ -15,13 +15,13 @@ Fixpoint delta0 (p0 : LP) : bool :=
   | _ => false
   end.
 
-Definition sigma1 (p0 : LP) : bool := delta0 p0 ||
+Definition sigma1 (p0 : Formula) : bool := delta0 p0 ||
   match p0 with
   | [~][fal][~]p => delta0 p
   | _ => false
   end.
 
-Inductive arHie : bool -> nat -> LP -> Prop :=
+Inductive arHie : bool -> nat -> Formula -> Prop :=
 | delta0_arh : forall b n p, Is_true(delta0 p) -> arHie b n p
 | sigma_hie  : forall n p, arHie false n p -> arHie true (S n) ([ext]p)
 | pie_hie    : forall n p, arHie true n p -> arHie false (S n) ([fal]p).

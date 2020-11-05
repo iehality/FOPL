@@ -6,8 +6,6 @@ Require Export FOPL.SetoidL.
 Require Export FOPL.Tactics.
 
 Definition theory {L : Lang} (T : Th) := fun p => T ||- p.
-Definition uniT {L : Lang} (T U : Th) := fun x => T x \/ U x.
-Notation "T :\/ U" := (uniT T U) (at level 71, left associativity).
 
 Inductive Null {L : Lang} : Th :=.
 Definition null {L : Lang} (T : Th) := forall p, ~ T p.
@@ -78,21 +76,21 @@ Section deduction_facts2.
       + simpl.
         intros.
         rewrite fal_Fal.
-        TRANS (([fal]p).[fun x :nat => s (S x)]).
+        ftrans (([fal]p).[fun x :nat => s (S x)]).
         apply IHn.
         simpl. lia.
         simpl.
-        INTRO.
+        fintro.
         Tpp.
-        SPECIALIZE H0 (s 0).
-        rewrite <- nested_rew in H0.
+        fspecialize H0 (s 0).
+        rewrite nested_rew in H0.
         assert(p.[ fun x => rewc (s 0; \0) (('0; fun x0 => sfc (s (S x0))) x)] = p.[s]). {
           apply rew_rew. unfold sfc.
           intros. simpl.
           destruct n0.
           simpl. auto.
           simpl.
-          rewrite <- nested_rewc.
+          rewrite nested_rewc.
           simpl.
           symmetry.
           apply rewc_id.
@@ -120,10 +118,10 @@ Section deduction_facts2.
       apply Genp_ps.
   Qed.
 
-  Inductive Array (f : nat -> LP) (n0 : nat) : Th := 
+  Inductive Array (f : nat -> Formula) (n0 : nat) : Th := 
   | array : forall n, n < n0 -> Array f n0 (f n).
 
-  Fixpoint Sum (f : nat -> LP) (n0 : nat) : Th := 
+  Fixpoint Sum (f : nat -> Formula) (n0 : nat) : Th := 
     match n0 with
     | 0 => Null
     | S n => (Sum f n) ¦ (f n)
@@ -178,7 +176,7 @@ Section deduction_facts2.
       assert(sf(f n [->] p) = sf(f n)[->]sf p). unfold sf. simpl. auto.
       rewrite <- H0.
       apply IHn.
-      INTRO.
+      fintro.
       auto.
   Qed.
 
@@ -196,7 +194,7 @@ Section deduction_facts2.
       apply sf_dsb.
       apply deduction_inv.
       apply IHn.
-      INTRO.
+      fintro.
       auto.
   Qed.
 
@@ -387,7 +385,7 @@ Section deduction_facts2.
     intros.
     MP (sf p).
     apply sf_add. auto.
-    INTRO.
+    fintro.
     auto.
   Qed. 
   
@@ -396,11 +394,11 @@ Section deduction_facts2.
   Proof.
     assert(forall T p, T ||- ([fal][fal]p)[->]([fal][fal]p.['1;('0;fun x => '(S (S x)))])).
     - intros.
-      INTRO.
+      fintro.
       GEN.
       GEN.
       assert(p.['0;('1;fun x => '(4 + x))]/('1, '0) = p.['1;('0;fun x => '(S (S x)))]). {
-        rewrite <- nested_rew.
+        rewrite nested_rew.
         apply rew_rew.
         intros.
         destruct n.
@@ -414,7 +412,7 @@ Section deduction_facts2.
         unfold sf. simpl.
         apply fal_eq.
         apply fal_eq.
-        rewrite <- nested_rew.
+        rewrite nested_rew.
         apply rew_rew.
         intros. unfold sfc. simpl.
         destruct n. auto.
@@ -424,11 +422,11 @@ Section deduction_facts2.
       rewrite <- H0.
       auto.
     - intros.
-      SPLIT.
+      fsplit.
       auto.
       assert(p = p.['1;('0;fun x => '(S (S x)))].['1;('0;fun x => '(S (S x)))]). {
         rewrite -> rew_id at 1.
-        rewrite <- nested_rew.
+        rewrite nested_rew.
         apply rew_rew.
         intros.
         destruct n. auto. simpl.
@@ -443,72 +441,18 @@ Section deduction_facts2.
   Proof.
     intros.
     RAA (t[=]u).
-    SYMMETRY. auto.
+    fsymmetry. auto.
     WL. auto.
   Qed.
 
-  Lemma TNNPP : forall T p, p ==(T) [~][~]p.
+  Lemma DNE : forall T p, p ==(T) [~][~]p.
   Proof.
     unfold equiv. simpl. unfold priff.
     intros.
-    SPLIT.
+    fsplit.
     apply pr_NN.
     apply pr_NNPP.
   Qed.
-(**
-  Hypothesis fafa: forall t u, Art u <= 1 -> Art t = 0 -> Art (rewc (t;\0) u) = 0.
-
-
-  Lemma fsfsafa: forall p t, Ar p <= 1 -> Art t = 0 -> Ar p/(t) = 0.
-  Proof.
-    intros.
-    induction (Ar p).
-    - simpl.
-      intros.
-      rewrite fafa.
-      rewrite fafa.
-      simpl. auto.
-      apply Nat.max_lub_r in H. auto.
-      auto.
-      apply Nat.max_lub_l in H. auto.
-      auto.
-    - simpl. auto.
-    - simpl.
-      intros.
-      rewrite fafa.
-      auto. auto. auto.
-    - simpl.
-      intros.
-      rewrite fafa.
-      rewrite fafa.
-      simpl. auto.
-      apply Nat.max_lub_r in H. auto.
-      auto.
-      apply Nat.max_lub_l in H. auto.
-      auto.
-    - simpl.
-      intros.
-      rewrite IHp1.
-      rewrite IHp2.
-      simpl. auto.
-      apply Nat.max_lub_r in H. auto.
-      auto.
-      apply Nat.max_lub_l in H. auto.
-      auto.
-    - simpl.
-      intros.
-      apply IHp.
-      auto. auto.
-    - simpl.
-      intros.
-      unfold sfc. simpl.
-      rewrite
-
-
-      Check .
-    
-  Qed.*)
-  
   
 End deduction_facts2.
 
