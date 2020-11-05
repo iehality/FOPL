@@ -11,22 +11,23 @@ Definition Th {L : Lang} := @Formula L -> Prop.
   
 Inductive sfT {L : Lang} (T : Th) : Th := 
 | sfT_intro : forall p, T p -> sfT T (sf p).
+
 Hint Constructors sfT : core.
 
 Notation "⇑ T" := (sfT T) (at level 20).
 
 Inductive provable {L : Lang} (T : Th) : Formula -> Prop :=
-  | GEN  : forall q, provable (⇑ T) q -> provable T ([∀] q)
-  | MP   : forall p q, provable T p -> provable T (p [->] q) -> provable T q
-  | Pr0  : forall p, T p -> provable T p
-  | Pr1  : forall p q, provable T (p [->] q [->] p)
-  | Pr2  : forall p q r, provable T ((p [->] q [->] r) [->] ((p [->] q) [->] (p [->] r)))
-  | Pr3  : forall p q, provable T (([~] p [->] [~] q) [->] (q [->] p))
-  | Qt0  : forall p t, provable T (([∀] p) [->] p/(t))
-  | Qt1  : forall p q, provable T (([∀] p [->] q) [->] ([∀] p) [->] [∀] q)
-  | Qt2  : forall p, provable T (p [->] [∀] (🡑 p))
-  | Eq0  : forall t, provable T (t [=] t)
-  | Eq1  : forall p t u, provable T (t [=] u [->] p/(t) [->] p/(u)).
+| GEN : forall q, provable (⇑ T) q -> provable T ([∀] q)
+| MP  : forall p q, provable T p -> provable T (p [->] q) -> provable T q
+| Pr0 : forall p, T p -> provable T p
+| Pr1 : forall p q, provable T (p [->] q [->] p)
+| Pr2 : forall p q r, provable T ((p [->] q [->] r) [->] ((p [->] q) [->] (p [->] r)))
+| Pr3 : forall p q, provable T (([~] p [->] [~] q) [->] (q [->] p))
+| Qt0 : forall p t, provable T (([∀] p) [->] p/(t))
+| Qt1 : forall p q, provable T (([∀] p [->] q) [->] ([∀] p) [->] [∀] q)
+| Qt2 : forall p, provable T (p [->] [∀] (🡑 p))
+| Eq0 : forall t, provable T (t [=] t)
+| Eq1 : forall p t u, provable T (t [=] u [->] p/(t) [->] p/(u)).
 
 Hint Resolve Pr1 Pr2 Pr3 Qt0 Qt1 Qt2 Eq0 Eq1 Pr0 : core.
 
@@ -67,21 +68,6 @@ Section deduction_facts.
   Qed.
 
   Hint Resolve p__p : core.
-
-  Ltac Prove_by_Pr0 :=
-    apply Pr0;
-    try repeat (apply appnew || apply appdom).
-  
-  Ltac AX := (simpl; apply p__p) 
-    || apply Pr1 
-    || apply Pr2 
-    || apply Pr3 
-    || apply Qt0 
-    || apply Qt1 
-    || apply Qt2 
-    || apply Eq0 
-    || apply Eq1 
-    || Prove_by_Pr0; auto.
   
   (** ** Proof facts *)  
   
@@ -239,7 +225,7 @@ Section deduction_facts.
     auto.
   Qed.
   
-  Lemma sf_dsb1 : forall T U p, T ⊆ U -> (T ¦ p) ⊆ (U¦ p).
+  Lemma sf_dsb1 : forall T U p, T ⊆ U -> (T ¦ p) ⊆ (U ¦ p).
   Proof.
     unfold incT.
     intros.

@@ -1,3 +1,4 @@
+Require Export Utf8.
 Require Export Classical.
 Require Export FunctionalExtensionality.
 Require Import Arith.

@@ -7,6 +7,8 @@ Require Export FOPL.Tactics.
 
 Definition theory {L : Lang} (T : Th) := fun p => T ||- p.
 
+Definition sentence_th {L : Lang} T := sfT T ≡ T.
+
 Inductive Null {L : Lang} : Th :=.
 Definition null {L : Lang} (T : Th) := forall p, ~ T p.
 
@@ -456,4 +458,4 @@ Section deduction_facts2.
   
 End deduction_facts2.
 
-Ltac MPsf h := repeat WL; apply (@sfT_MP _ h _).
+Ltac MPsf h := repeat WL; apply (@sfT_MP _ _ h _).

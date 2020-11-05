@@ -1,4 +1,4 @@
-Require Import FOPL.Arithmetic.
+Require Import FOPL.FOA.
 
 Set Implicit Arguments.
 
@@ -73,7 +73,7 @@ Section FixPoint.
   Qed.
 
 End FixPoint.
-  
+
 Theorem Undefinability : Consis PA -> ~ (exists Tr, Ar Tr = 1 /\ forall p, PA ||- p [<->] Tr/([⌜p⌝])).
 Proof.
   intros conT. intro.

@@ -37,6 +37,8 @@ Proof.
 Qed.
 (**)
 
+Definition id {A : Type} (x : A) := x.
+
 Instance N : Model L := {
   Dom := nat;
   SDom := DSetoid nat;
@@ -153,7 +155,39 @@ Proof.
   auto.
 Qed.
 
-Definition id {A : Type} (x : A) := x.
+Lemma ConPA : Consis PA.
+Proof.
+  unfold Consis.
+  intro.
+  destruct H as [p].
+  destruct H.
+  assert(N |= p).
+  apply PA_Soundness. auto.
+  assert(N |= [~] p).
+  apply PA_Soundness. auto.
+  unfold models in H1.
+  unfold models in H2.
+  specialize (H1 id).
+  specialize (H2 id).
+  simpl in H2.
+  contradiction.
+Qed.
+
+Lemma ConQ : Consis Q.
+Proof.
+  unfold Consis.
+  intro.
+  destruct H as [p].
+  destruct H.
+  assert(ConPA:=ConPA).
+  destruct ConPA.
+  exists p.
+  split.
+  apply TInclusion with (T:=Q). apply Q_PA.
+  auto.
+  apply TInclusion with (T:=Q). apply Q_PA.
+  auto.
+Qed.
 
 Lemma max_0 : forall n m, 
   max n m = 0 -> (n = 0 /\ m = 0).
@@ -585,7 +619,3 @@ Proof.
   apply H0.
   auto.
 Qed.
-
-
-
-    
