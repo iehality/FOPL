@@ -244,8 +244,8 @@ Proof.
     simpl.
     apply contrad_add.
     fintro.
-    REW_at_1r.
-    REW_at_2.
+    frewrite_by_1r.
+    frewrite_by_2.
     auto.
   - symmetry.
     auto. 
@@ -340,7 +340,7 @@ Proof.
     rewrite PLUS0.
     assert(Q ||- [fal][fal][S]'0[=][S]'1[->]'0[=]'1).
     auto.
-    SPECIALIZE2 H ([n][+]c) ([n][+]d).
+    fspecialize2 H ([n][+]c) ([n][+]d).
     auto.
     auto.
 Qed.
@@ -404,7 +404,7 @@ Proof.
       RAA (([S] [n0 + m0]) [+] '0 [=] [n0]).
       apply deduction_inv.
       assert(si : Q ||- [fal][fal][S]'0[=][S]'1[->]'0[=]'1). auto.
-      SPECIALIZE2 si (([S][n0 + m0]) [+] '0) ([n0]). auto.
+      fspecialize2 si (([S][n0 + m0]) [+] '0) ([n0]). auto.
       WL. auto.
     + auto.
   - auto.
@@ -426,15 +426,15 @@ Proof.
     simpl.
     intros.
     apply (IHt s) in H.
-    REWRITE_r H.
+    frewrite_r H.
     auto.
   - simpl.
     intros.
     apply max_0 in H. destruct H.
     apply (IHt1 s) in H.
     apply (IHt2 s) in H0.
-    REWRITE H.
-    REWRITE H0.
+    frewrite H.
+    frewrite H0.
     destruct f.
     apply plus_compl.
     apply mult_compl.

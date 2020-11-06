@@ -130,6 +130,51 @@ Proof.
     auto.
 Qed.
 
+Ltac fsimpl :=
+  simpl; unfold sf, sfc; simpl;
+  match goal with
+  | H : (Ar _ = 0) |- _ => rewrite (@sbs_rew0 _ _ _ H)
+  | _ => idtac
+  end;
+  match goal with
+  | H : (Ar _ = 1) |- _ => rewrite (@sbs_rew1 _ _ _ _ H)
+  | _ => idtac
+  end;
+  match goal with
+  | H : (Ar _ = 2) |- _ => rewrite (@sbs_rew2 _ _ _ _ _ H)
+  | _ => idtac
+  end;
+  match goal with
+  | H : (Ar _ = 3) |- _ => rewrite (@sbs_rew3 _ _ _ _ _ _ H)
+  | _ => idtac
+  end;
+  unfold sf, sfc;
+  simpl;
+  repeat rewrite IN_rewc.
+
+Ltac fsimpl_in H0 :=
+  simpl in H0; unfold sf, sfc in H0; simpl in H0;
+  match goal with
+  | H : (Ar _ = 0) |- _ => rewrite (@sbs_rew0 _ _ _ H) in H0
+  | _ => idtac
+  end;
+  match goal with
+  | H : (Ar _ = 1) |- _ => rewrite (@sbs_rew1 _ _ _ _ H) in H0
+  | _ => idtac
+  end;
+  match goal with
+  | H : (Ar _ = 2) |- _ => rewrite (@sbs_rew2 _ _ _ _ _ H) in H0
+  | _ => idtac
+  end;
+  match goal with
+  | H : (Ar _ = 3) |- _ => rewrite (@sbs_rew3 _ _ _ _ _ _ H) in H0
+  | _ => idtac
+  end;
+  unfold sf, sfc in H0;
+  simpl in H0;
+  repeat rewrite IN_rewc in H0.
+
+
 Ltac rewrite_formula x y :=
   let H := fresh "H" in
   let n0 := fresh "n" in

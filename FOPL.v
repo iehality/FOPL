@@ -7,6 +7,15 @@ Require Import Lia.
 
 
 (**)
+  Definition f_equal2 : forall (A B C : Type) (f : A -> B -> C) (x0 x1 : A) (y0 y1 : B),
+    x0 = x1 -> y0 = y1 -> f x0 y0 = f x1 y1 :=
+  fun (A B C : Type) (f : A → B → C) (x0 x1 : A) (y0 y1 : B) (H : x0 = x1) (H0 : y0 = y1) =>
+  match H in (_ = x) return (_ = f x _) with
+  | eq_refl => 
+    match H0 in (_ = x) return (_ = f _ x) with
+    | eq_refl => eq_refl
+    end
+  end.
 
   Lemma lt_lt_max_l : forall n m r, n < m -> n < max m r.
   Proof.
@@ -126,8 +135,8 @@ Fixpoint rew {L : Lang} (s : nat -> Term) (p0 : Formula) : Formula :=
   | fal p     => fal (rew ((var 0); fun x => (sfc (s x))) p)
   end.
 
-Notation "p .[ s ]" := (rew s p) (at level 20).
-Notation "p .[ n ; s ]" := (p .[(n;s)]) (at level 20).
+Notation "p .[ s ]" := (rew s p) (at level 50).
+Notation "p .[ n ; s ]" := (p .[(n;s)]) (at level 50).
 Notation "\0" := (fun x => (var x)) (at level 0).
 Definition sf {L : Lang} (p : Formula) : Formula := p .[fun x => (var (S x))].
 Definition alt {L : Lang} (p : Formula) : Formula := p.[fun x => '(pred x)].
@@ -135,6 +144,7 @@ Notation "🠙 t" := (sfc t) (at level 5, right associativity).
 Notation "🡑 p" := (sf p) (at level 5, right associativity).
 Notation "🡓 p" := (alt p) (at level 5, right associativity).
 Definition norm {L : Lang} c p := p .[fun x => c].
+
 Notation "p /( x )" := (p .[x;\0]) (at level 50).
 Notation "p /( x , y )" := (p .[x; (y; \0)]) (at level 50).
 Notation "p /( x , y , z )" := (p .[x; (y; (z; \0))]) (at level 50).
@@ -529,6 +539,58 @@ Section rew_facts.
     intros.
     apply rew_rew.
     rewrite H.
+    intros.
+    destruct n.
+    simpl. auto.
+    destruct n.
+    simpl. auto.
+    destruct n.
+    simpl. auto.
+    lia.
+  Qed.
+
+  Lemma sbs_rew0 : forall p s, 
+    Ar p = 0 -> p.[s] = p.
+  Proof.
+    intros.
+    rewrite rew_id.
+    apply rew_rew.
+    intros.
+    lia.
+  Qed.
+
+  Lemma sbs_rew1 : forall p t s, 
+    Ar p = 1 -> p/(t).[s] = p/(rewc s t).
+  Proof.
+    intros.
+    rewrite nested_rew.
+    apply rew_rew.
+    intros.
+    destruct n.
+    simpl. auto.
+    lia.
+  Qed.
+
+  Lemma sbs_rew2 : forall p t0 t1 s,
+    Ar p = 2 -> p/(t0, t1).[s] = p/(rewc s t0, rewc s t1).
+  Proof.
+    intros.
+    rewrite nested_rew.
+    apply rew_rew.
+    intros.
+    destruct n.
+    simpl. auto.
+    destruct n.
+    simpl. auto.
+    lia.
+  Qed.
+
+  Lemma sbs_rew3 : forall p t0 t1 t2 s, 
+    Ar p = 3 -> p/(t0, t1, t2).[s] = p/(rewc s t0, rewc s t1, rewc s t2).
+  Proof.
+    intros.
+    rewrite nested_rew.
+    apply rew_rew.
     intros.
     destruct n.
     simpl. auto.

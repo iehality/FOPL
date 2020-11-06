@@ -23,7 +23,7 @@ Proof.
   auto. auto.
 Qed.
 
-Ltac papply X :=
+Ltac fapply X :=
   match (type of X) with
   | ?T ||- ?p [->] ?q =>
     apply (@MP' _ _ p _ X) 
@@ -35,9 +35,9 @@ Ltac foldeqh H := rewrite preq0 in H.
 Ltac unfoldeq := rewrite <- preq0.
 Ltac unfoldeqh H := rewrite <- preq0 in H.
 
-Ltac SPECIALIZE2 H c d := apply fal_R2 with (t:=c) (s:=d) in H; simpl in H.
+Ltac fspecialize2 H c d := apply fal_R2 with (t:=c) (s:=d) in H; simpl in H.
 
-Ltac REWRITE X :=
+Ltac frewrite X :=
   let U := fresh "T" in
   match (type of X) with
   | ?T ||- ?x[=]?y => 
@@ -53,7 +53,7 @@ Ltac REWRITE X :=
   | _ => idtac
   end.
 
-Ltac REWRITE_r X :=
+Ltac frewrite_r X :=
   let U := fresh "T" in
   match (type of X) with
   | ?T ||- ?x[=]?y => 
@@ -69,7 +69,7 @@ Ltac REWRITE_r X :=
   | _ => idtac
   end.
 
-Ltac REW_at_1 :=
+Ltac frewrite_by_1 :=
   let X := fresh "H" in
   match goal with
   | |- (?T ¦ ?p ||- _) => assert(X : T ¦ p ||- p);[auto|idtac]
@@ -91,7 +91,7 @@ Ltac REW_at_1 :=
   end;
   clear X.
 
-Ltac REW_at_1r :=
+Ltac frewrite_by_1r :=
   let X := fresh "H" in
   match goal with
   | |- (?T ¦ ?p ||- _) => assert(X : T ¦ p ||- p);[auto|idtac]
@@ -113,7 +113,7 @@ Ltac REW_at_1r :=
   end;
   clear X.
 
-Ltac REW_at_2 :=
+Ltac frewrite_by_2 :=
   let X := fresh "H" in
   match goal with
   | |- (?T ¦ ?p ¦ ?q ||- _) => assert(X : T ¦ p ¦ q ||- p);[auto|idtac]
@@ -135,7 +135,7 @@ Ltac REW_at_2 :=
   end;
   clear X.
 
-Ltac REW_at_2r :=
+Ltac frewrite_by_2r :=
   let X := fresh "H" in
   match goal with
   | |- (?T ¦ ?p ¦ ?q ||- _) => assert(X : T ¦ p ¦ q ||- p);[auto|idtac]
