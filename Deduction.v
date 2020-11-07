@@ -56,22 +56,28 @@ Section deduction_facts.
   Ltac MP h := apply (@MP _ _ h _).
 
   Variable L : Lang.
-  Check Pr1.
 
-  Notation "p [ Pr ] H " := (Pr H : (_ ||- p)) (at level 20, right associativity).
-  Notation "[MP] p ├-- H0 └-- H1" := (@MP _ _ _ p H0 H1) (at level 20, right associativity).
-  Notation "[Pr1] p" := (@Pr1 _ _ _ _ : _ ||- p) (at level 20, right associativity).
-  Notation "[Pr2] p" := (@Pr2 _ _ _ _ _ : _ ||- p) (at level 20, right associativity).
+  Definition apply1 (P Q : Prop) : (P -> Q) -> P -> Q :=
+    fun (pq : P -> Q) (p : P) => pq p.
+  Notation "#[ pq ]# ⟦ P ⟧ p" := (@apply1 P _ pq p) (at level 20, right associativity).
 
-  Lemma p__p' : forall T p, T ||- p [->] p.
+  Definition apply2 (P Q R : Prop) : (P -> Q -> R) -> P -> Q -> R :=
+    fun (pqr : P -> Q -> R) (p : P) (q : Q) => pqr p q.
+  Notation "#[ pqr ]# ⟦ P ⟧ p ⟦ Q ⟧ q" := (@apply2 P Q _ pqr p q) (at level 20, right associativity).
+  
+  Lemma p__p_prt : forall T p, T ||- p [->] p.
   Proof.
     intros.
     refine (
-      [MP] p [->] p 
-       ├--[Pr1] (p [->] p [->] p) 
-       └--[MP]  (p [->] p [->] p) [->] p [->] p
-           ├--[Pr1] (p [->] (p [->] p) [->] p)
-           └--[Pr2] ((p [->] (p [->] p) [->] p) [->] (p [->] p [->] p) [->] p [->] p)
+    #[ltac: (apply MP)]#
+      ⟦ T ||- p [->] p [->] p ⟧
+      ltac: (auto)
+      ⟦ T ||- (p [->] p [->] p) [->] p [->] p ⟧
+      #[ltac: (apply MP)]#
+        ⟦ T ||- p [->] (p [->] p) [->] p ⟧
+        ltac: (auto)
+        ⟦ T ||- (p [->] (p [->] p) [->] p) [->] (p [->] p [->] p) [->] p [->] p ⟧
+        ltac: (auto)
     ).
   Qed.
 
@@ -343,8 +349,6 @@ Section deduction_facts.
     auto.
     auto.
   Qed.
-
-  Print p__p.
   
   Lemma pr_NN : forall T p, T ||- p [->] [~] [~] p.
   Proof.
