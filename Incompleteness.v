@@ -66,42 +66,45 @@ Section FixPoint.
     specialize(Giff p [⌜p⌝]).
     apply fal_and_destruct in Giff.
     destruct Giff.
-    unfold σ.
-    fsimpl.
-    fsplit.
-    + refine (
-        *Proof
-          ⟦ T ||- ([∀] Γ/([⌜p⌝], [⌜p⌝], '0) [->] θ/('0)) [->] θ/([⌜p/([⌜p⌝])⌝]) ⟧
-            *[1 ltac:(fintro)]
-          ⟦ T ¦ ([∀] Γ/([⌜p⌝], [⌜p⌝], '0) [->] θ/('0)) ||- θ/([⌜p/([⌜p⌝])⌝]) ⟧
-            *[2 ltac:(apply MP)]
-            ⟦ T ¦ ([∀] Γ/([⌜p⌝], [⌜p⌝], '0) [->] θ/('0)) ||- Γ/([⌜p⌝], [⌜p⌝], [⌜p/([⌜p⌝])⌝]) ⟧
-                *[1 ltac: (WL)]
-              ⟦ T ||- Γ/([⌜p⌝], [⌜p⌝], [⌜p/([⌜p⌝])⌝]) ⟧
-                ltac: (fspecialize H0 [⌜p/([⌜p⌝])⌝]; fsimpl_in H0; fapply H0; auto)
-            ⟦ T ¦ ([∀] Γ/([⌜p⌝], [⌜p⌝], '0) [->] θ/('0)) ||- Γ/([⌜p⌝], [⌜p⌝], [⌜p/([⌜p⌝])⌝]) [->] θ/([⌜p/([⌜p⌝])⌝]) ⟧
-              ltac:(Tpp; fspecialize H1 [⌜p/([⌜p⌝])⌝]; fsimpl_in H1; auto)
+    refine (
+      *Proof
+        ⟦ T ||- σ/([⌜p⌝]) [<->] θ/([⌜p/([⌜p⌝])⌝]) ⟧
+          *[1 ltac:(auto)]
+          ⟦ T ||- ([∀] Γ/([⌜p⌝], [⌜p⌝], '0) [->] θ/('0)) [<->] θ/([⌜p/([⌜p⌝])⌝]) ⟧
+            *[2 ltac:(fsplit)]
+            ⟦ T ||- ([∀] Γ/([⌜p⌝], [⌜p⌝], '0) [->] θ/('0)) [->] θ/([⌜p/([⌜p⌝])⌝]) ⟧
+              *[1 ltac:(fintro)]
+              ⟦ T ¦ ([∀] Γ/([⌜p⌝], [⌜p⌝], '0) [->] θ/('0)) ||- θ/([⌜p/([⌜p⌝])⌝]) ⟧
+                *[2 ltac:(apply MP)]
+                ⟦ T ¦ ([∀] Γ/([⌜p⌝], [⌜p⌝], '0) [->] θ/('0)) ||- Γ/([⌜p⌝], [⌜p⌝], [⌜p/([⌜p⌝])⌝]) ⟧
+                  *[1 ltac: (WL)]
+                    ⟦ T ||- Γ/([⌜p⌝], [⌜p⌝], [⌜p/([⌜p⌝])⌝]) ⟧
+                      ltac: (fspecialize H0 [⌜p/([⌜p⌝])⌝]; fsimpl_in H0; fapply H0; auto)
+                ⟦ T ¦ ([∀] Γ/([⌜p⌝], [⌜p⌝], '0) [->] θ/('0)) ||- Γ/([⌜p⌝], [⌜p⌝], [⌜p/([⌜p⌝])⌝]) [->] θ/([⌜p/([⌜p⌝])⌝]) ⟧
+                  ltac:(Tpp; fspecialize H1 [⌜p/([⌜p⌝])⌝]; fsimpl_in H1; auto)
+            ⟦ T ||- θ/([⌜p/([⌜p⌝])⌝]) [->] [fal] Γ/([⌜p⌝], [⌜p⌝], '0) [->] θ/('0) ⟧
+                *[1 ltac: (fintro)]
+              ⟦ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ||- [fal] Γ/([⌜p⌝], [⌜p⌝], '0) [->] θ/('0) ⟧
+                *[2 ltac:(apply fal_trans)]
+                ⟦ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ||- [fal] Γ/([⌜p⌝], [⌜p⌝], '0) [->] '0 [=] [⌜p/([⌜p⌝])⌝] ⟧
+                  ltac: (WL; auto)
+                ⟦ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ||- [fal] '0 [=] [⌜p/([⌜p⌝])⌝] [->] θ/('0) ⟧
+                  *[1 ltac: (auto)]
+                  ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ||- '0 [=] [⌜p/([⌜p⌝])⌝] [->] θ/('0) ⟧
+                    *[1 ltac: (fsimpl; fintro)]
+                    ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ¦ '0 [=] [⌜p/([⌜p⌝])⌝] ||- θ/('0) ⟧
+                      *[2 ltac:(apply MP)]
+                      ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ¦ '0 [=] [⌜p/([⌜p⌝])⌝] ||- θ/([⌜p/([⌜p⌝])⌝]) ⟧
+                        ltac:(auto)
+                      ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ¦ '0 [=] [⌜p/([⌜p⌝])⌝] ||- θ/([⌜p/([⌜p⌝])⌝]) [->] θ/('0) ⟧
+                        *[2 ltac:(apply MP)]
+                        ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ¦ '0 [=] [⌜p/([⌜p⌝])⌝] ||- [⌜p/([⌜p⌝])⌝] [=] '0 ⟧
+                          ltac:(fsymmetry; auto)
+                        ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ¦ '0 [=] [⌜p/([⌜p⌝])⌝] ||- [⌜p/([⌜p⌝])⌝] [=] '0 [->] θ/([⌜p/([⌜p⌝])⌝]) [->] θ/('0) ⟧
+                          ltac:(auto)
       ).
-    + fintro.
-      apply fal_trans with (q := '0 [=] [⌜p/([⌜p⌝])⌝]).
-      WL.
-      auto.
-      GEN. fsimpl.
-      refine(
-        *Proof
-          ⟦ ⇑ T ¦ (θ/([⌜p/([⌜p⌝])⌝])) ||- '0 [=] [⌜p/([⌜p⌝])⌝] [->] θ/('0) ⟧
-            *[1 ltac: (fsimpl; fintro)]
-          ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ¦ '0 [=] [⌜p/([⌜p⌝])⌝] ||- θ/('0) ⟧
-            *[2 ltac:(apply MP)]
-            ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ¦ '0 [=] [⌜p/([⌜p⌝])⌝] ||- θ/([⌜p/([⌜p⌝])⌝]) ⟧
-              ltac:(auto)
-            ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ¦ '0 [=] [⌜p/([⌜p⌝])⌝] ||- θ/([⌜p/([⌜p⌝])⌝]) [->] θ/('0) ⟧
-              *[2 ltac:(apply MP)]
-              ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ¦ '0 [=] [⌜p/([⌜p⌝])⌝] ||- [⌜p/([⌜p⌝])⌝] [=] '0 ⟧
-                ltac:(fsymmetry; auto)
-              ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ¦ '0 [=] [⌜p/([⌜p⌝])⌝] ||- [⌜p/([⌜p⌝])⌝] [=] '0 [->] θ/([⌜p/([⌜p⌝])⌝]) [->] θ/('0) ⟧
-                ltac:(auto)
-      ).
+      intros. unfold σ. fsimpl. auto.
+      intros. GEN. fsimpl. auto.
   Qed.
 
     (** $\gamma := (\dot{\forall} (\Gamma/('1, '1, '0) \dot{\to} \theta/('0)))/(\delta \ulcorner \dot{\forall} (\Gamma/('1, '1, '0) \dot{\to} \theta/('0)) \urcorner )$ *)
@@ -313,6 +316,61 @@ Qed.
           apply D1. auto.
           WL.        
           apply D2.
+        + MP (Pr/([⌜[~]Pr/([⌜γ⌝])[->]p⌝])).
+          MP (Pr/([⌜Pr/([⌜γ⌝])⌝])).
+          MP (Pr/([⌜γ⌝])).
+          apply pNNPP.
+          apply deduction_inv.
+          apply contrad_add. auto.
+          WL.
+          apply D3.
+          MP (Pr/([⌜Pr/([⌜γ⌝])[->][~]Pr/([⌜γ⌝])[->]p⌝])).
+          WL.
+          apply D1.
+          fintro. fintro.
+          apply explosion.
+          intro. destruct H1.
+          exists (Pr/([⌜γ⌝])). split.
+          auto. auto.
+          WL.
+          apply D2.
+          WL.
+          apply D2.
+      - auto.
+    Qed.
+
+    Lemma Consis_g_pt : T ||- ConT [->] γ.
+    Proof.
+      assert (D := nPrfix). 
+      fdestruct D.
+      unfold ConT.
+      apply contrad_elim.
+      fintro.
+      apply pNN.
+      assert (forall p, T ¦ ([~] γ) ||- Pr/([⌜p⌝])).
+      - intros.
+        MP (Pr/([⌜[~]Pr/([⌜γ⌝])⌝])).
+        + refine(
+            *Proof
+              ⟦ T ¦ [~] γ ||- Pr /([⌜[~] Pr/([⌜γ⌝])⌝]) ⟧
+                *[2 ltac:(apply MP)]
+                ⟦ T ¦ [~] γ ||- Pr/([⌜γ⌝]) ⟧
+                  *[1 ltac:(apply pNNPP)]
+                  ⟦ T ¦ [~] γ ||- [~][~] Pr/([⌜γ⌝]) ⟧
+                  *[1 ltac:(apply deduction_inv)]
+                  ⟦ T ||- [~] γ [->] [~][~] Pr/([⌜γ⌝]) ⟧
+                    ltac:(apply contrad_add; auto)
+                ⟦ T ¦ [~] γ ||- Pr/([⌜γ⌝]) [->] Pr /([⌜[~] Pr/([⌜γ⌝])⌝]) ⟧
+                  *[1 ltac:(WL)]
+                  ⟦ T ||- Pr/([⌜γ⌝]) [->] Pr /([⌜[~] Pr/([⌜γ⌝])⌝]) ⟧
+                    *[2 ltac:(apply MP)]
+                    ⟦ T ||- Pr /([⌜γ [->] [~] Pr/([⌜γ⌝])⌝]) ⟧
+                      *[1 ltac:(apply D1)]
+                      ⟦ T ||- γ [->] [~] Pr /( [⌜γ⌝]) ⟧
+                        ltac:(auto)
+                    ⟦ T ||- Pr /([⌜γ [->] [~] Pr/([⌜γ⌝])⌝]) [->] Pr/([⌜γ⌝]) [->] Pr /([⌜[~] Pr/([⌜γ⌝])⌝]) ⟧
+                      ltac:(apply D2)
+          ).
         + MP (Pr/([⌜[~]Pr/([⌜γ⌝])[->]p⌝])).
           MP (Pr/([⌜Pr/([⌜γ⌝])⌝])).
           MP (Pr/([⌜γ⌝])).
