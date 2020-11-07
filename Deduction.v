@@ -59,25 +59,31 @@ Section deduction_facts.
 
   Definition apply1 (P Q : Prop) : (P -> Q) -> P -> Q :=
     fun (pq : P -> Q) (p : P) => pq p.
-  Notation "#[ pq ]# ⟦ P ⟧ p" := (@apply1 P _ pq p) (at level 20, right associativity).
 
   Definition apply2 (P Q R : Prop) : (P -> Q -> R) -> P -> Q -> R :=
     fun (pqr : P -> Q -> R) (p : P) (q : Q) => pqr p q.
-  Notation "#[ pqr ]# ⟦ P ⟧ p ⟦ Q ⟧ q" := (@apply2 P Q _ pqr p q) (at level 20, right associativity).
+
+  Notation "`Proof ⟨ P ⟩ p" := (p : P) (at level 20, right associativity).
+  Notation "#[1 pq ] ⟨ P ⟩ p" := (@apply1 P _ pq p) (at level 20, right associativity).
+  Notation "#[2 pqr ] ⟨ P ⟩ p ⟨ Q ⟩ q" := (@apply2 P Q _ pqr p q) (at level 20, right associativity).
+  Notation "#[2 pqr ] ├─⟨ P ⟩ p └─⟨ Q ⟩ q" := (@apply2 P Q _ pqr p q) (at level 20, right associativity).
+  Notation "│" := (fun x => x).
   
-  Lemma p__p_prt : forall T p, T ||- p [->] p.
+  Lemma p__p_prooftree : forall T p, T ||- p [->] p.
   Proof.
     intros.
     refine (
-    #[ltac: (apply MP)]#
-      ⟦ T ||- p [->] p [->] p ⟧
-      ltac: (auto)
-      ⟦ T ||- (p [->] p [->] p) [->] p [->] p ⟧
-      #[ltac: (apply MP)]#
-        ⟦ T ||- p [->] (p [->] p) [->] p ⟧
-        ltac: (auto)
-        ⟦ T ||- (p [->] (p [->] p) [->] p) [->] (p [->] p [->] p) [->] p [->] p ⟧
-        ltac: (auto)
+    `Proof
+      ⟨ T ||- p [->] p ⟩
+      #[2 ltac: (apply MP)]
+        ├─⟨ T ||- p [->] p [->] p ⟩
+        │ ltac: (apply Pr1)
+        └─⟨ T ||- (p [->] p [->] p) [->] p [->] p ⟩
+          #[2 ltac: (apply MP)]
+            ├─⟨ T ||- p [->] (p [->] p) [->] p ⟩
+            │ ltac: (apply Pr1)
+            └─⟨ T ||- (p [->] (p [->] p) [->] p) [->] (p [->] p [->] p) [->] p [->] p ⟩
+              ltac: (apply Pr2)
     ).
   Qed.
 
@@ -349,6 +355,36 @@ Section deduction_facts.
     auto.
     auto.
   Qed.
+
+  Lemma pr_NNPP_prooftree : forall T p, T ||- [~] [~] p [->] p.
+  Proof.
+    intros.
+    refine(
+    `Proof
+      ⟨ T ||- [~][~] p [->] p ⟩
+       #[1 ltac: (fintro)]
+      ⟨ T ¦ [~][~] p ||- p ⟩
+        #[2 ltac: (apply MP)]
+        ⟨ T ¦ [~][~] p ||- [~][~] p ⟩ 
+          ltac: (auto)
+        ⟨ T ¦ [~][~] p ||- [~][~] p [->] p ⟩
+          #[2 ltac: (apply MP)]
+          ⟨ T ¦ [~][~] p ||- [~] p [->] [~][~][~] p ⟩
+            #[2 ltac: (apply MP)]
+            ⟨ T ¦ [~][~] p ||- [~][~][~][~] p [->] [~][~] p ⟩
+              #[2 ltac: (apply MP)]
+              ⟨ T ¦ [~] [~] p ||- [~] [~] p ⟩ 
+                ltac: (auto)
+              ⟨T ¦ [~][~] p ||- [~][~] p [->] [~][~][~][~] p [->] [~][~] p⟩
+                ltac: (auto)
+            ⟨ T ¦ [~][~] p ||- ([~][~][~][~] p [->] [~][~] p) [->] [~] p [->] [~][~][~] p ⟩
+              ltac: (auto)
+          ⟨ T ¦ [~][~] p ||- ([~] p [->] [~][~][~] p) [->] [~][~] p [->] p ⟩
+            ltac: (auto)
+    ).
+  Qed.
+
+
   
   Lemma pr_NN : forall T p, T ||- p [->] [~] [~] p.
   Proof.
