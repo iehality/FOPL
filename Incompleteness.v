@@ -2,7 +2,6 @@ Require Import FOPL.FOA.
 
 Set Implicit Arguments.
 
-
 Parameter T : Th.
 Parameter code : Formula -> nat.
 Axiom code_inj : forall p q, code p = code q -> p = q.
@@ -12,7 +11,7 @@ Notation "⌜ p ⌝" := (code p) (at level 0).
 
 Parameter Γ : Formula.
 Axiom artG : Ar Γ = 3.
-Axiom Gdefg : forall p n, T ||- [fal]Γ/([⌜p⌝], n, '0) [<->] '0[=][⌜p/(n)⌝].
+Axiom Giff : forall p n, T ||- [fal]Γ/([⌜p⌝], n, '0) [<->] '0[=][⌜p/(n)⌝].
 
 Section FixPoint.
   
@@ -20,16 +19,16 @@ Section FixPoint.
   Hypothesis opf : Ar θ = 1.
   Definition σ : Formula := [fal](Γ/('1, '1, '0)[->]θ/('0)).
     
-  Lemma sigiff : forall p, T ||- σ/([⌜p⌝])[<->]θ/([⌜p/([⌜p⌝])⌝]).
+  Lemma sigiff : forall p, T ||- σ/([⌜p⌝]) [<->] θ/([⌜p/([⌜p⌝])⌝]).
   Proof.
     intros.
     assert(artG := artG).
-    assert(Gdefg := Gdefg).
+    assert(Giff := Giff).
     unfold σ.
     fsimpl.
-    specialize(Gdefg p [⌜p⌝]).
-    apply fal_and_destruct in Gdefg.
-    destruct Gdefg.
+    specialize(Giff p [⌜p⌝]).
+    apply fal_and_destruct in Giff.
+    destruct Giff.
     fsplit.
     + fintro.
       MP(Γ/([⌜p⌝], [⌜p⌝], [⌜p/([⌜p⌝])⌝])).
@@ -54,6 +53,55 @@ Section FixPoint.
       fsymmetry.
       auto.
       auto.
+  Qed.
+
+  Check (ltac: (fsplit)).
+
+
+  Lemma sigiff_pt : forall p, T ||- σ/([⌜p⌝]) [<->] θ/([⌜p/([⌜p⌝])⌝]).
+  Proof.
+    intros.
+    assert(artG := artG).
+    assert(Giff := Giff).
+    specialize(Giff p [⌜p⌝]).
+    apply fal_and_destruct in Giff.
+    destruct Giff.
+    unfold σ.
+    fsimpl.
+    fsplit.
+    + refine (
+        *Proof
+          ⟦ T ||- ([∀] Γ/([⌜p⌝], [⌜p⌝], '0) [->] θ/('0)) [->] θ/([⌜p/([⌜p⌝])⌝]) ⟧
+            *[1 ltac:(fintro)]
+          ⟦ T ¦ ([∀] Γ/([⌜p⌝], [⌜p⌝], '0) [->] θ/('0)) ||- θ/([⌜p/([⌜p⌝])⌝]) ⟧
+            *[2 ltac:(apply MP)]
+            ⟦ T ¦ ([∀] Γ/([⌜p⌝], [⌜p⌝], '0) [->] θ/('0)) ||- Γ/([⌜p⌝], [⌜p⌝], [⌜p/([⌜p⌝])⌝]) ⟧
+                *[1 ltac: (WL)]
+              ⟦ T ||- Γ/([⌜p⌝], [⌜p⌝], [⌜p/([⌜p⌝])⌝]) ⟧
+                ltac: (fspecialize H0 [⌜p/([⌜p⌝])⌝]; fsimpl_in H0; fapply H0; auto)
+            ⟦ T ¦ ([∀] Γ/([⌜p⌝], [⌜p⌝], '0) [->] θ/('0)) ||- Γ/([⌜p⌝], [⌜p⌝], [⌜p/([⌜p⌝])⌝]) [->] θ/([⌜p/([⌜p⌝])⌝]) ⟧
+              ltac:(Tpp; fspecialize H1 [⌜p/([⌜p⌝])⌝]; fsimpl_in H1; auto)
+      ).
+    + fintro.
+      apply fal_trans with (q := '0 [=] [⌜p/([⌜p⌝])⌝]).
+      WL.
+      auto.
+      GEN. fsimpl.
+      refine(
+        *Proof
+          ⟦ ⇑ T ¦ (θ/([⌜p/([⌜p⌝])⌝])) ||- '0 [=] [⌜p/([⌜p⌝])⌝] [->] θ/('0) ⟧
+            *[1 ltac: (fsimpl; fintro)]
+          ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ¦ '0 [=] [⌜p/([⌜p⌝])⌝] ||- θ/('0) ⟧
+            *[2 ltac:(apply MP)]
+            ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ¦ '0 [=] [⌜p/([⌜p⌝])⌝] ||- θ/([⌜p/([⌜p⌝])⌝]) ⟧
+              ltac:(auto)
+            ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ¦ '0 [=] [⌜p/([⌜p⌝])⌝] ||- θ/([⌜p/([⌜p⌝])⌝]) [->] θ/('0) ⟧
+              *[2 ltac:(apply MP)]
+              ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ¦ '0 [=] [⌜p/([⌜p⌝])⌝] ||- [⌜p/([⌜p⌝])⌝] [=] '0 ⟧
+                ltac:(fsymmetry; auto)
+              ⟦ ⇑ T ¦ θ/([⌜p/([⌜p⌝])⌝]) ¦ '0 [=] [⌜p/([⌜p⌝])⌝] ||- [⌜p/([⌜p⌝])⌝] [=] '0 [->] θ/([⌜p/([⌜p⌝])⌝]) [->] θ/('0) ⟧
+                ltac:(auto)
+      ).
   Qed.
 
     (** $\gamma := (\dot{\forall} (\Gamma/('1, '1, '0) \dot{\to} \theta/('0)))/(\delta \ulcorner \dot{\forall} (\Gamma/('1, '1, '0) \dot{\to} \theta/('0)) \urcorner )$ *)
