@@ -1,5 +1,4 @@
 Require Import FOPL.FOA.
-
 Set Implicit Arguments.
 
 Parameter T : Th.
@@ -349,48 +348,55 @@ Qed.
       apply pNN.
       assert (forall p, T ¦ ([~] γ) ||- Pr/([⌜p⌝])).
       - intros.
-        MP (Pr/([⌜[~]Pr/([⌜γ⌝])⌝])).
-        + refine(
-            *Proof
-              ⟦ T ¦ [~] γ ||- Pr /([⌜[~] Pr/([⌜γ⌝])⌝]) ⟧
+      refine(
+        *Proof
+          ⟦ T ¦ [~] γ ||- Pr/([⌜p⌝]) ⟧
+            *[2 ltac:(apply MP)]
+            ⟦ T ¦ [~] γ ||- Pr /([⌜[~] Pr/([⌜γ⌝])⌝]) ⟧
+              *[2 ltac:(apply MP)]
+              ⟦ T ¦ [~] γ ||- Pr/([⌜γ⌝]) ⟧
+                *[1 ltac:(apply pNNPP)]
+                ⟦ T ¦ [~] γ ||- [~][~] Pr/([⌜γ⌝]) ⟧
+                *[1 ltac:(apply deduction_inv)]
+                ⟦ T ||- [~] γ [->] [~][~] Pr/([⌜γ⌝]) ⟧
+                  ltac:(apply contrad_add; auto)
+              ⟦ T ¦ [~] γ ||- Pr/([⌜γ⌝]) [->] Pr /([⌜[~] Pr/([⌜γ⌝])⌝]) ⟧
+                *[1 ltac:(WL)]
+                ⟦ T ||- Pr/([⌜γ⌝]) [->] Pr /([⌜[~] Pr/([⌜γ⌝])⌝]) ⟧
+                  *[2 ltac:(apply MP)]
+                  ⟦ T ||- Pr /([⌜γ [->] [~] Pr/([⌜γ⌝])⌝]) ⟧
+                    *[1 ltac:(apply D1)]
+                    ⟦ T ||- γ [->] [~] Pr /( [⌜γ⌝]) ⟧
+                      ltac:(auto)
+                  ⟦ T ||- Pr /([⌜γ [->] [~] Pr/([⌜γ⌝])⌝]) [->] Pr/([⌜γ⌝]) [->] Pr /([⌜[~] Pr/([⌜γ⌝])⌝]) ⟧
+                    ltac:(apply D2)
+            ⟦ T ¦ [~] γ ||- Pr/([⌜[~] Pr/([⌜γ⌝])⌝]) [->] Pr/([⌜p⌝]) ⟧
+              *[2 ltac:(apply MP)]
+              ⟦ T ¦ [~] γ ||- Pr/([⌜[~] Pr/([⌜γ⌝]) [->] p⌝]) ⟧
                 *[2 ltac:(apply MP)]
-                ⟦ T ¦ [~] γ ||- Pr/([⌜γ⌝]) ⟧
-                  *[1 ltac:(apply pNNPP)]
-                  ⟦ T ¦ [~] γ ||- [~][~] Pr/([⌜γ⌝]) ⟧
-                  *[1 ltac:(apply deduction_inv)]
-                  ⟦ T ||- [~] γ [->] [~][~] Pr/([⌜γ⌝]) ⟧
-                    ltac:(apply contrad_add; auto)
-                ⟦ T ¦ [~] γ ||- Pr/([⌜γ⌝]) [->] Pr /([⌜[~] Pr/([⌜γ⌝])⌝]) ⟧
-                  *[1 ltac:(WL)]
-                  ⟦ T ||- Pr/([⌜γ⌝]) [->] Pr /([⌜[~] Pr/([⌜γ⌝])⌝]) ⟧
-                    *[2 ltac:(apply MP)]
-                    ⟦ T ||- Pr /([⌜γ [->] [~] Pr/([⌜γ⌝])⌝]) ⟧
+                ⟦ T ¦ [~] γ ||- Pr/([⌜Pr/([⌜γ⌝])⌝]) ⟧
+                  *[2 ltac:(apply MP)]
+                  ⟦ T ¦ [~] γ ||- Pr/([⌜γ⌝]) ⟧
+                    *[1 ltac:(apply pNNPP)]
+                    ⟦ T ¦ [~] γ ||- [~][~] Pr/([⌜γ⌝]) ⟧
+                      ltac:(apply deduction_inv; apply contrad_add; auto)
+                  ⟦ T ¦ [~] γ ||- Pr/([⌜γ⌝]) [->] Pr/([⌜Pr/([⌜γ⌝])⌝]) ⟧
+                    ltac:(WL; apply D3)
+                ⟦ T ¦ [~] γ ||- Pr/([⌜Pr/([⌜γ⌝])⌝]) [->] Pr/([⌜[~] Pr/([⌜γ⌝]) [->] p⌝]) ⟧
+                  *[2 ltac:(apply MP)]
+                  ⟦ T ¦ [~] γ ||- Pr/([⌜Pr/([⌜γ⌝]) [->] [~] Pr/([⌜γ⌝]) [->] p⌝]) ⟧
+                    *[1 ltac:(WL)]       
+                    ⟦ T ||- Pr/([⌜Pr/([⌜γ⌝]) [->] [~] Pr/([⌜γ⌝]) [->] p⌝]) ⟧
                       *[1 ltac:(apply D1)]
-                      ⟦ T ||- γ [->] [~] Pr /( [⌜γ⌝]) ⟧
-                        ltac:(auto)
-                    ⟦ T ||- Pr /([⌜γ [->] [~] Pr/([⌜γ⌝])⌝]) [->] Pr/([⌜γ⌝]) [->] Pr /([⌜[~] Pr/([⌜γ⌝])⌝]) ⟧
+                      ⟦ T ||- Pr/([⌜γ⌝]) [->] [~] Pr/([⌜γ⌝]) [->] p ⟧
+                        ltac:(fintros; apply explosion0 with (p:=Pr/([⌜γ⌝])); auto)
+                  ⟦ T ¦ [~] γ ||- Pr/([⌜Pr/([⌜γ⌝]) [->] [~] Pr/([⌜γ⌝]) [->] p⌝]) [->] Pr/([⌜Pr/([⌜γ⌝])⌝]) [->] Pr/([⌜[~] Pr/([⌜γ⌝]) [->] p⌝]) ⟧
+                    *[1 ltac:(WL)]
+                    ⟦ T ||- Pr/([⌜Pr/([⌜γ⌝]) [->] [~] Pr/([⌜γ⌝]) [->] p⌝]) [->] Pr/([⌜Pr/([⌜γ⌝])⌝]) [->] Pr/([⌜[~] Pr/([⌜γ⌝]) [->] p⌝]) ⟧
                       ltac:(apply D2)
+              ⟦ T ¦ [~] γ ||- Pr/([⌜[~] Pr/([⌜γ⌝]) [->] p⌝]) [->] Pr/([⌜[~] Pr/([⌜γ⌝])⌝]) [->] Pr/([⌜p⌝]) ⟧
+                ltac:(WL; apply D2)
           ).
-        + MP (Pr/([⌜[~]Pr/([⌜γ⌝])[->]p⌝])).
-          MP (Pr/([⌜Pr/([⌜γ⌝])⌝])).
-          MP (Pr/([⌜γ⌝])).
-          apply pNNPP.
-          apply deduction_inv.
-          apply contrad_add. auto.
-          WL.
-          apply D3.
-          MP (Pr/([⌜Pr/([⌜γ⌝])[->][~]Pr/([⌜γ⌝])[->]p⌝])).
-          WL.
-          apply D1.
-          fintro. fintro.
-          apply explosion.
-          intro. destruct H1.
-          exists (Pr/([⌜γ⌝])). split.
-          auto. auto.
-          WL.
-          apply D2.
-          WL.
-          apply D2.
       - auto.
     Qed.
     
