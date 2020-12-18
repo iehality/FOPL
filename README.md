@@ -1,3 +1,3 @@
 # FOPL
-##Formalizing First-Order Predicate Logic in Coq.
+Formalizing First-Order Predicate Logic in Coq.
 
